@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwtHelper = require('../config/token');
 const crypto = require('crypto');
 const emailTemp = require('../config/email');
+const { Op } = require('sequelize');
 
 // Register
 exports.register = async (req, res) => {
