@@ -110,6 +110,7 @@ exports.adminlogin = async (req, res) => {
       const user = await User.findOne({
         where: {
           name,
+          is_block:false,
           is_sub_admin: true
         }
       });
@@ -483,7 +484,7 @@ exports.changeSubadminPassword = async (req, res) => {
 exports.editSubadmin = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, access_json } = req.body;
+    const { name, access_json ,is_block } = req.body;
 
     const subadmin = await User.findOne({
       where: {
@@ -519,7 +520,8 @@ exports.editSubadmin = async (req, res) => {
 
     // Update fields
     if (name) subadmin.name = name;
-    if (access_json) subadmin.access_json = access_json;
+    if (access_json) subadmin.access_json = access_json; 
+    if (is_block) subadmin.is_block = is_block;
 
     await subadmin.save();
 
@@ -612,3 +614,43 @@ exports.deleteSubadmin = async (req, res) => {
     });
   }
 };
+
+exports.getSubadminById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const subadmin = await User.findOne({
+      where: {
+        id,
+        role: 3,
+        deletedAt: null
+      },
+      attributes: { exclude: ['password', 'reset_token'] }
+    });
+
+    if (!subadmin) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: 'Subadmin not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Subadmin fetched successfully',
+      data: subadmin,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to fetch subadmin',
+      error: err.message
+    });
+  }
+};
+

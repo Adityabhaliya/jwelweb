@@ -24,5 +24,7 @@ router.patch('/admin/change-subadmin-password/:id',verifyAdminToken, userControl
 router.put('/admin/sub-edit/:id',verifyAdminToken, userController.editSubadmin); 
 router.delete('/admin/sub-delete/:id',verifyAdminToken, userController.deleteSubadmin); 
 router.get('/admin/subadmin-list',verifyAdminToken, userController.getAllsubadmin);
+router.get('/admin/subadmin/:id',verifyAdminToken, userController.getSubadminById);
+
 
 module.exports = router;
