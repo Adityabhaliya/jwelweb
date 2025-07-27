@@ -14,6 +14,8 @@ module.exports = (sequelize) => {
     is_block: { type: DataTypes.BOOLEAN },
     is_sub_admin: { type: DataTypes.BOOLEAN, default: false },
     access_json: { type: DataTypes.JSON, allowNull: true },
+    deletedAt: { type: DataTypes.DATE },
+
   });
 }; 
  

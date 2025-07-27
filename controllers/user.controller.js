@@ -540,12 +540,20 @@ exports.editSubadmin = async (req, res) => {
 
 exports.getAllsubadmin = async (req, res) => {
   try {
-    const { page, size } = req.query;
+    const { page, size, search } = req.query;
     const { limit, offset } = getPagination(page, size);
-
+    const whereCondition = {
+      role: 3,
+      deletedAt: null,
+    };
+    if (search) {
+      whereCondition.name = {
+        [Op.like]: `%${search}%`
+      };
+    }
     // Step 1: Fetch all subadmins (with pagination)
     const data = await User.findAndCountAll({
-      where: { role: 3, deletedAt: null },
+      where: whereCondition,
       limit,
       offset,
       order: [['createdAt', 'DESC']],
@@ -568,6 +576,39 @@ exports.getAllsubadmin = async (req, res) => {
       success: false,
       status: 500,
       message: 'Failed to get subadmins',
+    });
+  }
+};
+
+
+exports.deleteSubadmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const subadmin = await User.findOne({
+      where: { id, role: 3, deletedAt: null }
+    });
+
+    if (!subadmin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Subadmin not found or already deleted',
+      });
+    }
+
+    await subadmin.update({ deletedAt: new Date() });
+
+    res.status(200).json({
+      success: true,
+      message: 'Subadmin deleted successfully',
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete subadmin',
+      error: err.message
     });
   }
 };
