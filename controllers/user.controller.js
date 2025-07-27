@@ -2,6 +2,7 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwtHelper = require('../config/token');
 const crypto = require('crypto');
+const emailTemp = require('../config/email');
 
 // Register
 exports.register = async (req, res) => {
@@ -274,7 +275,7 @@ exports.forgetPassword = async (req, res) => {
       { where: { email } }
     );
 
-    await sendOtpEmail(email, resetToken);
+    await emailTemp.sendOtpEmail(email, resetToken);
 
     return res.status(200).json({ success: true, message: 'Password reset email sent successfully', email });
   } catch (error) {
