@@ -55,7 +55,7 @@ exports.getCategoryBySlug = async (req, res) => {
 exports.getCategorydropdwon = async (req, res) => {
   try {
     const category = await Category.findAll({
-      where: { deletedAt: null, is_block: false, parent_category_id: null },
+      where: { deletedAt: null, parent_category_id: null },
     });
 
     if (!category) {
