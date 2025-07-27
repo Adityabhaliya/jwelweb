@@ -175,6 +175,7 @@ exports.getAllCategories = async (req, res) => {
       offset,
       order: [['createdAt', 'DESC']],
     });
+    
 
     const categories = data.rows.map(cat => cat.toJSON());
 

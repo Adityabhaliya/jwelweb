@@ -4,6 +4,7 @@ const jwtHelper = require('../config/token');
 const crypto = require('crypto');
 const emailTemp = require('../config/email');
 const { Op } = require('sequelize');
+const { getPagingData, getPagination } = require('../config/common');
 
 // Register
 exports.register = async (req, res) => {
@@ -476,5 +477,97 @@ exports.changeSubadminPassword = async (req, res) => {
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to change password', error: err.message });
+  }
+};
+
+exports.editSubadmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, access_json } = req.body;
+
+    const subadmin = await User.findOne({
+      where: {
+        id,
+        is_sub_admin: true,
+        role: 3
+      }
+    });
+
+    if (!subadmin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Subadmin not found',
+      });
+    }
+
+    // Optional: Check if name already taken by another subadmin
+    if (name && name !== subadmin.name) {
+      const nameExists = await User.findOne({
+        where: {
+          name,
+          is_sub_admin: true,
+          id: { [Op.ne]: id } // ensure not same user
+        }
+      });
+      if (nameExists) {
+        return res.status(400).json({
+          success: false,
+          message: 'Subadmin name already in use',
+        });
+      }
+    }
+
+    // Update fields
+    if (name) subadmin.name = name;
+    if (access_json) subadmin.access_json = access_json;
+
+    await subadmin.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Subadmin updated successfully',
+      data: subadmin
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating subadmin',
+      error: err.message
+    });
+  }
+};
+
+exports.getAllsubadmin = async (req, res) => {
+  try {
+    const { page, size } = req.query;
+    const { limit, offset } = getPagination(page, size);
+
+    // Step 1: Fetch all subadmins (with pagination)
+    const data = await User.findAndCountAll({
+      where: { role: 3, deletedAt: null },
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+      attributes: { exclude: ['password', 'reset_token'] } // Optional: Hide sensitive fields
+    });
+
+    // Step 2: Format paginated response
+    const response = getPagingData(data, page, limit);
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Subadmins fetched successfully',
+      data: response,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to get subadmins',
+    });
   }
 };
