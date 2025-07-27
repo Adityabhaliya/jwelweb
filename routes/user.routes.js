@@ -11,7 +11,7 @@ router.post('/user/login', userController.login);
 router.post('/admin/login', userController.adminlogin);
 router.post('/admin/forget-password', userController.forgetPassword);  
 
-router.post('/admin/reset-password', userController.resetPassword); 
+router.put('/admin/reset-password', userController.resetPassword); 
 router.post('/admin/change-password',verifyAdminToken, userController.resetChangePassword); 
 // Protected routes
 router.get('/admin/profile', verifyAdminToken, userController.getProfile);
