@@ -337,7 +337,7 @@ exports.forgetPassword = async (req, res) => {
       { where: { email } }
     );
 
-    await emailTemp.sendOtpEmail(email, resetToken ,user.name);
+    await emailTemp.sendOtpEmail(email, hashedToken ,user.name);
 
     return res.status(200).json({ success: true, message: 'Password reset email sent successfully', email });
   } catch (error) {
