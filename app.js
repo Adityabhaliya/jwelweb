@@ -8,7 +8,7 @@ const path = require('path'); // Import path module
 require('dotenv').config();
 
 app.use(cors({
-  origin: 'http://localhost:4010',
+  origin: '*', // 👈 Allow all origins
   credentials: true
 }));
 
