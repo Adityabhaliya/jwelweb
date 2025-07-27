@@ -168,7 +168,7 @@ exports.getAllCategories = async (req, res) => {
     const { limit, offset } = getPagination(page, size);
 
     const data = await Category.findAndCountAll({
-      where: { deletedAt: null, is_block: false },
+      where: { deletedAt: null },
 
       limit,
       offset,
