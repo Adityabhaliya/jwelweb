@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-exports.sendOtpEmail = async (email, resetToken) => {
+exports.sendOtpEmail = async (email, resetToken ,name) => {
     try {
         const resetLink = `${ process.env.BASE_URL }reset-password ? token = ${ resetToken }`;
         const mailOptions = {
@@ -21,7 +21,7 @@ exports.sendOtpEmail = async (email, resetToken) => {
             subject: "🔐 Reset Your Password",
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px; max-width: 500px;">
-                    <h2 style="color: #333;">Hello,</h2>
+                    <h2 style="color: #333;">Hello, ${name}</h2>
                     <p style="font-size: 16px; color: #555;">
                         You requested a password reset. Click the button below to reset your password:
                     </p>
