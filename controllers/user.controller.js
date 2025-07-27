@@ -540,15 +540,15 @@ exports.editSubadmin = async (req, res) => {
 
 exports.getAllsubadmin = async (req, res) => {
   try {
-    const { page, size, search } = req.query;
+    const { page, size, s } = req.query;
     const { limit, offset } = getPagination(page, size);
     const whereCondition = {
       role: 3,
       deletedAt: null,
     };
-    if (search) {
+    if (s) {
       whereCondition.name = {
-        [Op.like]: `%${search}%`
+        [Op.like]: `%${s}%`
       };
     }
     // Step 1: Fetch all subadmins (with pagination)
