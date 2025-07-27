@@ -158,7 +158,7 @@ exports.adminlogin = async (req, res) => {
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(401).json({
+        return res.status(200).json({
           success: false,
           status: 401,
           message: 'Invalid credentials',
@@ -263,7 +263,7 @@ exports.forgetPassword = async (req, res) => {
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(200).json({ success: false, message: "User not found" });
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -329,21 +329,21 @@ exports.resetChangePassword = async (req, res) => {
     }
 
     if (new_password !== confirm_password) {
-      return res.status(400).json({ success: false, message: "Passwords do not match" });
+      return res.status(200).json({ success: false, message: "Passwords do not match" });
     }
 
     // Find user by token
     const user = await User.findOne({ where: { role: 1 } });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: "Invalid or expired token" });
+      return res.status(200).json({ success: false, message: "Invalid or expired token" });
     }
 
     // If old password is provided, verify it
     if (old_password) {
       const isMatch = await bcrypt.compare(old_password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ success: false, message: "Old password is incorrect" });
+        return res.status(200).json({ success: false, message: "Old password is incorrect" });
       }
     }
 

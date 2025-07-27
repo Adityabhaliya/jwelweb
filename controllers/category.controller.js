@@ -1,6 +1,6 @@
 const { Category, Product } = require('../models');
 const slugify = require('../config/slugify');
-
+const { getPagination, getPagingData } = require('../config/common');
 // Create Category
 exports.createCategory = async (req, res) => {
   try {
