@@ -14,8 +14,7 @@ const transporter = nodemailer.createTransport({
 
 exports.sendOtpEmail = async (email, resetToken) => {
     try {
-        const resetLink = `${process.env.BASE_URL}token=${resetToken}`;
-
+        const resetLink = `${ process.env.BASE_URL }reset-password ? token = ${ resetToken }`;
         const mailOptions = {
             from: "adityabhaliya418@gmail.com",
             to: email,
