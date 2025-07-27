@@ -9,7 +9,7 @@ exports.register = async (req, res) => {
   try {
     const { name, lastname, email, password, role } = req.body;
 
-    if (!email || !password ) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
         status: 400,
@@ -224,6 +224,67 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+exports.updateAdminProfile = async (req, res) => {
+  try {
+    const { name, email, profile } = req.body;
+
+    const user = await User.findByPk(req.user.id);
+
+    if (!user || (user.role !== 1 && user.role !== 3)) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: 'User not found or unauthorized',
+      });
+    }
+
+    if (email) {
+      const existingEmail = await User.findOne({
+        where: {
+          email,
+          id: { [Op.ne]: req.user.id }
+        }
+      });
+      if (existingEmail) {
+        return res.status(409).json({
+          success: false,
+          status: 409,
+          message: 'Email already in use by another user',
+        });
+      }
+    }
+
+    await user.update({
+      name: name || user.name,
+      email: email || user.email,
+      profile: profile || user.profile,
+    });
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Profile updated successfully',
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        profile: user.profile,
+        role: user.role,
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to update profile',
+      error: err.message
+    });
+  }
+};
+
+
 exports.access = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
@@ -367,7 +428,7 @@ exports.resetChangePassword = async (req, res) => {
 
 exports.createSubadmin = async (req, res) => {
   try {
-    const { name, email, password ,access_json } = req.body;
+    const { name, email, password, access_json } = req.body;
 
     const checkName = await User.findOne({ where: { name, is_sub_admin: true } })
     if (checkName) {
