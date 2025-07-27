@@ -93,7 +93,7 @@ exports.deleteCategoryBySlug = async (req, res) => {
       });
     }
 
-    await category.update({ deletedAt: new Date() });
+    await category.destroy(); // Soft delete (sets deletedAt automatically)
 
     res.json({
       success: true,
@@ -109,6 +109,7 @@ exports.deleteCategoryBySlug = async (req, res) => {
     });
   }
 };
+
 
 exports.updateCategoryBySlug = async (req, res) => {
   try {
