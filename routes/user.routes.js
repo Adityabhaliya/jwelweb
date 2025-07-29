@@ -20,7 +20,7 @@ router.put('/admin/profile', verifyAdminToken, userController.updateAdminProfile
 
 router.get('/admin/access', verifyAdminToken, userController.access);
 router.post('/admin/create-subadmin',verifyAdminToken, userController.createSubadmin);
-router.patch('/admin/change-subadmin-password/:id',verifyAdminToken, userController.changeSubadminPassword);
+router.put('/admin/change-subadmin-password/:id',verifyAdminToken, userController.changeSubadminPassword);
 router.put('/admin/sub-edit/:id',verifyAdminToken, userController.editSubadmin); 
 router.delete('/admin/sub-delete/:id',verifyAdminToken, userController.deleteSubadmin); 
 router.get('/admin/subadmin-list',verifyAdminToken, userController.getAllsubadmin);
