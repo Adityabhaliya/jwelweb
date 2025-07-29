@@ -115,7 +115,7 @@ exports.adminlogin = async (req, res) => {
         }
       });
       if (!user) {
-        return res.status(404).json({
+        return res.status(200).json({
           success: false,
           status: 404,
           message: 'Admin not found or role mismatch',
@@ -153,7 +153,7 @@ exports.adminlogin = async (req, res) => {
         }
       });
       if (!user) {
-        return res.status(404).json({
+        return res.status(200).json({
           success: false,
           status: 404,
           message: 'Admin not found or role mismatch',
@@ -435,7 +435,7 @@ exports.createSubadmin = async (req, res) => {
 
     const checkName = await User.findOne({ where: { name, is_sub_admin: true } })
     if (checkName) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: 'Subadmin with this name already exists',
       });
@@ -466,10 +466,10 @@ exports.changeSubadminPassword = async (req, res) => {
     const { old_password, new_password } = req.body;
 
     const subadmin = await User.findOne({ where: { id, role: 3 } });
-    if (!subadmin) return res.status(404).json({ success: false, message: 'Subadmin not found' });
+    if (!subadmin) return res.status(200).json({ success: false, message: 'Subadmin not found' });
     const isMatch = await bcrypt.compare(old_password, subadmin.password);
     if (!isMatch) {
-      return res.status(400).json({ success: false, message: 'Old password is incorrect' });
+      return res.status(200).json({ success: false, message: 'Old password is incorrect' });
     }
 
     const hashedPassword = await bcrypt.hash(new_password, 10);
@@ -653,4 +653,3 @@ exports.getSubadminById = async (req, res) => {
     });
   }
 };
-
