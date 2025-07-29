@@ -1,36 +1,40 @@
 const multer = require('multer');
 const path = require('path');
 
-// Storage config
+// ✅ Allowed extensions
+const allowedExtensions = [
+  '.jpeg', '.jpg', '.png', '.gif', '.webp',       // Images
+  '.mp4', '.mov', '.avi', '.mkv', '.webm',         // Videos
+  '.xls', '.xlsx'                                  // Excel files
+];
+
+// ✅ Storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // folder to store
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
+    const ext = path.extname(file.originalname).toLowerCase();
     const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
     cb(null, filename);
-  },
+  }
 });
 
-// File filter (allow images/videos only)
+// ✅ File filter with extension check
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|mp4|mov|avi/;
   const ext = path.extname(file.originalname).toLowerCase();
-  const mimetype = allowedTypes.test(file.mimetype);
-  const extname = allowedTypes.test(ext);
-
-  if (mimetype && extname) {
+  if (allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Only image or video files are allowed!'));
+    cb(new Error('Only image, video, and Excel files are allowed!'));
   }
 };
 
+// ✅ Final multer upload setup
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
 });
 
 module.exports = upload;
