@@ -22,7 +22,7 @@ exports.verifyAdminToken = (req, res, next) => {
 
         next();
     } catch (error) {
-        res.status(400).json({ success: false, message: 'Invalid Token' });
+        res.status(401).json({ success: false, message: 'Invalid Token' });
     }
 };
 
@@ -40,7 +40,7 @@ exports.verifyUserToken = (req, res, next) => {
         }
         next();
     } catch (error) {
-        res.status(400).json({ success: false, message: 'Invalid Token' });
+        res.status(401).json({ success: false, message: 'Invalid Token' });
     }
 };
 
