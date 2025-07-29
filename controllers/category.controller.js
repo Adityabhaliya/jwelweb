@@ -162,20 +162,18 @@ exports.updateCategoryBySlug = async (req, res) => {
   }
 };
 
-
 exports.getAllCategories = async (req, res) => {
   try {
-    const { page, size } = req.query;
+    const { page, size, s = '' } = req.query;
     const { limit, offset } = getPagination(page, size);
 
-    // Step 1: Fetch all categories (with pagination)
+    // Step 1: Fetch all categories (with pagination and soft-delete check)
     const data = await Category.findAndCountAll({
       where: { deletedAt: null },
       limit,
       offset,
       order: [['createdAt', 'DESC']],
     });
-    
 
     const categories = data.rows.map(cat => cat.toJSON());
 
@@ -201,8 +199,22 @@ exports.getAllCategories = async (req, res) => {
       parent_category_name: cat.parent_category_id ? parentMap[cat.parent_category_id] || null : null
     }));
 
-    // Step 5: Format response
-    const response = getPagingData({ ...data, rows: result }, page, limit);
+    // Step 5: Apply global search (if `s` is passed)
+    const filteredResults = s
+      ? result.filter(category => {
+          const stringified = JSON.stringify(category).toLowerCase();
+          return stringified.includes(s.toLowerCase());
+        })
+      : result;
+
+    // Step 6: Format paginated response manually (because search applies after DB fetch)
+    const pagedData = filteredResults.slice(0, limit);
+    const response = {
+      totalItems: filteredResults.length,
+      totalPages: Math.ceil(filteredResults.length / limit),
+      currentPage: Number(page) || 1,
+      data: pagedData
+    };
 
     res.status(200).json({
       success: true,
@@ -220,4 +232,61 @@ exports.getAllCategories = async (req, res) => {
     });
   }
 };
+// exports.getAllCategories = async (req, res) => {
+//   try {
+//     const { page, size } = req.query;
+//     const { limit, offset } = getPagination(page, size);
+
+//     // Step 1: Fetch all categories (with pagination)
+//     const data = await Category.findAndCountAll({
+//       where: { deletedAt: null },
+//       limit,
+//       offset,
+//       order: [['createdAt', 'DESC']],
+//     });
+    
+
+//     const categories = data.rows.map(cat => cat.toJSON());
+
+//     // Step 2: Extract unique parent_category_ids
+//     const parentCategoryIds = [...new Set(
+//       categories.map(cat => cat.parent_category_id).filter(id => id !== null)
+//     )];
+
+//     // Step 3: Fetch parent category names in one query
+//     const parentCategories = await Category.findAll({
+//       where: { id: parentCategoryIds },
+//       attributes: ['id', 'name']
+//     });
+
+//     const parentMap = {};
+//     parentCategories.forEach(cat => {
+//       parentMap[cat.id] = cat.name;
+//     });
+
+//     // Step 4: Add parent_category_name to each category
+//     const result = categories.map(cat => ({
+//       ...cat,
+//       parent_category_name: cat.parent_category_id ? parentMap[cat.parent_category_id] || null : null
+//     }));
+
+//     // Step 5: Format response
+//     const response = getPagingData({ ...data, rows: result }, page, limit);
+
+//     res.status(200).json({
+//       success: true,
+//       status: 200,
+//       message: 'Categories fetched successfully',
+//       data: response,
+//     });
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({
+//       success: false,
+//       status: 500,
+//       message: 'Failed to get categories',
+//     });
+//   }
+// };
 

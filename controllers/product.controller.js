@@ -27,25 +27,74 @@ exports.createProduct = async (req, res) => {
 };
 
 // GET All Products
+// exports.getAllProducts = async (req, res) => {
+//   try {
+//     const { page, size } = req.query;
+//     const { limit, offset } = getPagination(page, size);
+
+//     const data = await Product.findAndCountAll({
+//       limit,
+//       offset,
+//       order: [['createdAt', 'DESC']],
+//     });
+
+//     const response = getPagingData(data, page, limit);
+
+//     res.status(200).json({
+//       success: true,
+//       status: 200,
+//       message: 'Products fetched successfully',
+//       data:response,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({
+//       success: false,
+//       status: 500,
+//       message: 'Failed to get products',
+//     });
+//   }
+// };
 exports.getAllProducts = async (req, res) => {
   try {
-    const { page, size } = req.query;
+    const { page, size, s = '' } = req.query;
     const { limit, offset } = getPagination(page, size);
 
+    // Step 1: Fetch all products first (pagination applied initially)
     const data = await Product.findAndCountAll({
       limit,
       offset,
       order: [['createdAt', 'DESC']],
     });
 
-    const response = getPagingData(data, page, limit);
+    // Step 2: Convert all products to plain JSON
+    const products = data.rows.map(product => product.toJSON());
+
+    // Step 3: Apply search filter if `s` is provided
+    const filteredProducts = s
+      ? products.filter(product => {
+          const productString = JSON.stringify(product).toLowerCase();
+          return productString.includes(s.toLowerCase());
+        })
+      : products;
+
+    // Step 4: Manually paginate after filtering
+    const pagedData = filteredProducts.slice(0, limit);
+
+    const response = {
+      totalItems: filteredProducts.length,
+      totalPages: Math.ceil(filteredProducts.length / limit),
+      currentPage: Number(page) || 1,
+      data: pagedData
+    };
 
     res.status(200).json({
       success: true,
       status: 200,
       message: 'Products fetched successfully',
-      data:response,
+      data: response,
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({
@@ -55,6 +104,7 @@ exports.getAllProducts = async (req, res) => {
     });
   }
 };
+
 
 // GET Product by Slug
 exports.getProductBySlug = async (req, res) => {
