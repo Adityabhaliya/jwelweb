@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  return sequelize.define('ContactMessage', {
+  return sequelize.define('contact_messages', {
     first_name: {
       type: DataTypes.STRING(100),
       allowNull: true,
@@ -23,9 +23,7 @@ module.exports = (sequelize) => {
       allowNull: true,
     },
   }, {
-    tableName: 'contact_messages',
-    timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at'
+    timestamps: true,   
+    paranoid: true,    
   });
 };

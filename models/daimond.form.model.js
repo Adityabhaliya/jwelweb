@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  return sequelize.define('DiamondOrder', {
+  return sequelize.define('diamond_orders', {
     f_name: { type: DataTypes.STRING },
     l_name: { type: DataTypes.STRING },
     email: { type: DataTypes.STRING },
@@ -22,9 +22,7 @@ module.exports = (sequelize) => {
     other_contain_budget: { type: DataTypes.STRING },
     images: { type: DataTypes.JSON },
   }, {
-    tableName: 'diamond_orders',
-    timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at'
+    timestamps: true,   
+    paranoid: true,    
   });
 };

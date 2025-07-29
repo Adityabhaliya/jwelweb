@@ -88,3 +88,53 @@ exports.getAllform = async (req, res) => {
         });
     }
 };
+
+exports.delete = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { type } = req.query;
+  
+      if (!id || !type) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID and type are required',
+        });
+      }
+  
+      let model;
+  
+      if (type === 'daimond') {
+        model = Daimond; // your Sequelize model for diamond_orders
+      } else if (type === 'contact') {
+        model = contactSchema; // your Sequelize model for contact_messages
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid form type',
+        });
+      }
+  
+      const record = await model.findByPk(id);
+  
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+          message: 'Form not found',
+        });
+      }
+  
+      await record.destroy(); // Sequelize soft delete with paranoid
+  
+      res.status(200).json({
+        success: true,
+        message: 'Form deleted successfully',
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete form',
+      });
+    }
+  };
+  
