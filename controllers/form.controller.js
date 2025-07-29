@@ -42,23 +42,43 @@ exports.createform = async (req, res) => {
 
 exports.getAllform = async (req, res) => {
     try {
-        const { page, size } = req.query;
-        const { limit, offset } = getPagination(page, size);
+        const { page, size, type } = req.query;
+        if (type === 'daimond') {
 
-        const data = await Daimond.findAndCountAll({
-            limit,
-            offset,
-            order: [['id', 'DESC']],
-        });
+            const { limit, offset } = getPagination(page, size);
 
-        const response = getPagingData(data, page, limit);
+            const data = await Daimond.findAndCountAll({
+                limit,
+                offset,
+                order: [['id', 'DESC']],
+            });
 
-        res.status(200).json({
-            success: true,
-            status: 200,
-            message: 'form fetched successfully',
-            data: response,
-        });
+            const response = getPagingData(data, page, limit);
+
+            res.status(200).json({
+                success: true,
+                status: 200,
+                message: 'form fetched successfully',
+                data: response,
+            });
+        } else {
+            const { limit, offset } = getPagination(page, size);
+
+            const data = await contactSchema.findAndCountAll({
+                limit,
+                offset,
+                order: [['id', 'DESC']],
+            });
+
+            const response = getPagingData(data, page, limit);
+
+            res.status(200).json({
+                success: true,
+                status: 200,
+                message: 'form fetched successfully',
+                data: response,
+            });
+        }
     } catch (err) {
         console.error(err);
         res.status(500).json({
