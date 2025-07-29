@@ -26,37 +26,54 @@ exports.getAllSettings = async (req, res) => {
 
 exports.createOrUpdateSetting = async (req, res) => {
   try {
-    const { key, value } = req.body;
+    const settings = Array.isArray(req.body) ? req.body : [req.body];
 
-    if (!key) {
-      return res.status(400).json({
-        success: false,
-        status: 400,
-        message: 'Key is required',
+    const results = [];
+
+    for (const item of settings) {
+      const { key, value } = item;
+
+      if (!key) {
+        results.push({
+          key,
+          success: false,
+          message: 'Key is missing',
+        });
+        continue;
+      }
+
+      const [setting, created] = await Setting.findOrCreate({
+        where: { key },
+        defaults: { value },
       });
-    }
 
-    const [setting, created] = await Setting.findOrCreate({
-      where: { key },
-      defaults: { value },
-    });
+      if (!created) {
+        await setting.update({ value });
+      }
 
-    if (!created) {
-      await setting.update({ value });
+      results.push({
+        key,
+        success: true,
+        message: created ? 'Setting created' : 'Setting updated',
+        data: setting,
+      });
     }
 
     res.status(200).json({
       success: true,
       status: 200,
-      message: created ? 'Setting created' : 'Setting updated',
-      data: setting,
+      message: 'Settings processed successfully',
+      results,
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({
       success: false,
       status: 500,
-      message: 'Failed to create or update setting',
+      message: 'Failed to process settings',
+      error: err.message,
     });
   }
 };
+
