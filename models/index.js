@@ -1,10 +1,11 @@
 const sequelize = require('../db/db');
-const Product = require('./product.model')(sequelize);
+ const Product = require('./product.model')(sequelize);
 const User = require('./user.model')(sequelize);
 const Category = require('./category.model')(sequelize);
 const Setting = require('./setting.model')(sequelize);
 const Daimond = require('./daimond.form.model')(sequelize);
 const Banner = require('./banners.model')(sequelize);
+const contactSchema = require('./contact.schema')(sequelize);
 
 module.exports = {
   sequelize,
@@ -13,6 +14,7 @@ module.exports = {
   Category,
   Setting,
   Daimond,
-  Banner
+  Banner,
+  contactSchema
 
 };

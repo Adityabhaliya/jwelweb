@@ -1,19 +1,34 @@
-const { Daimond } = require('../models');
+const { Daimond, contactSchema } = require('../models');
 const slugify = require('../config/slugify');
 const { getPagination, getPagingData } = require('../config/common');
 
 exports.createform = async (req, res) => {
     try {
-        const data = req.body;
+        if (req.query.type === 'daimond') {
 
-        const form = await Daimond.create(data);
+            const data = req.body;
 
-        return res.status(200).json({
-            success: true,
-            status: 200,
-            message: 'form submit successfully',
-            data: form,
-        });
+            const form = await Daimond.create(data);
+
+            return res.status(200).json({
+                success: true,
+                status: 200,
+                message: 'form submit successfully',
+                data: form,
+            });
+        } else {
+
+            const data = req.body;
+
+            const form = await contactSchema.create(data);
+
+            return res.status(200).json({
+                success: true,
+                status: 200,
+                message: 'form submit successfully',
+                data: form,
+            });
+        }
     } catch (err) {
         console.error(err);
         res.status(500).json({
