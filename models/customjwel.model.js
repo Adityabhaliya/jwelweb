@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  return sequelize.define('diamond_orders', {
+  return sequelize.define('custom_jewelry', {
     f_name: { type: DataTypes.STRING },
     l_name: { type: DataTypes.STRING },
     email: { type: DataTypes.STRING },
@@ -12,14 +12,7 @@ module.exports = (sequelize) => {
     stonetype: { type: DataTypes.STRING },
     shape: { type: DataTypes.STRING },
     carat: { type: DataTypes.STRING },
-    clarity: { type: DataTypes.STRING },
-    cut: { type: DataTypes.STRING },
-    polish: { type: DataTypes.STRING },
-    symmetry: { type: DataTypes.STRING },
-    fluorescence: { type: DataTypes.STRING },
-    lab: { type: DataTypes.STRING },
-    color: { type: DataTypes.STRING },
-    intensity: { type: DataTypes.STRING },
+    metal: { type: DataTypes.STRING },
 
     budget: { type: DataTypes.STRING },
     order_note: { type: DataTypes.TEXT },
@@ -29,18 +22,10 @@ module.exports = (sequelize) => {
     other_contain_stone_type: { type: DataTypes.STRING },
     other_contain_shape: { type: DataTypes.STRING },
     other_contain_carat: { type: DataTypes.STRING },
-    other_contain_clarity: { type: DataTypes.STRING },
-    other_contain_cut: { type: DataTypes.STRING },
-    other_contain_polish: { type: DataTypes.STRING },
-    other_contain_symmetry: { type: DataTypes.STRING },
-    other_contain_fluorescence: { type: DataTypes.STRING },
-    other_contain_lab: { type: DataTypes.STRING },
-    other_contain_color: { type: DataTypes.STRING },
-    other_contain_intensity: { type: DataTypes.STRING },
+    other_contain_metal: { type: DataTypes.STRING },
     other_contain_budget: { type: DataTypes.STRING },
-
   }, {
     timestamps: true,
-    paranoid: true,
+    paranoid: true, // enables soft delete (deletedAt)
   });
 };

@@ -1,10 +1,11 @@
-const { Daimond, contactSchema } = require('../models');
+const { Op } = require('sequelize');
+const { Daimond, contactSchema, customjwel } = require('../models');
 const slugify = require('../config/slugify');
 const { getPagination, getPagingData } = require('../config/common');
 
 exports.createform = async (req, res) => {
     try {
-        if (req.query.type === 'daimond') {
+        if (req.query.type === 'diamond') {
 
             const data = req.body;
 
@@ -16,6 +17,17 @@ exports.createform = async (req, res) => {
                 message: 'form submit successfully',
                 data: form,
             });
+        }else if(req.query.type === 'custom-jewelry'){
+          const data = req.body;
+
+          const form = await customjwel.create(data);
+
+          return res.status(200).json({
+              success: true,
+              status: 200,
+              message: 'form submit successfully',
+              data: form,
+          });
         } else {
 
             const data = req.body;
@@ -39,7 +51,6 @@ exports.createform = async (req, res) => {
     }
 };
 
-const { Op } = require('sequelize');
 
 exports.getAllform = async (req, res) => {
   try {
@@ -48,9 +59,12 @@ exports.getAllform = async (req, res) => {
 
     let model, modelName;
 
-    if (type === 'daimond') {
+    if (type === 'diamond') {
       model = Daimond;
       modelName = 'Diamond';
+    }else if(type === 'custom-jewelry'){
+      model = customjwel;
+      modelName = 'custom-jewelry';
     } else {
       model = contactSchema;
       modelName = 'Contact';
@@ -161,11 +175,13 @@ exports.delete = async (req, res) => {
   
       let model;
   
-      if (type === 'daimond') {
+      if (type === 'diamond') {
         model = Daimond; // your Sequelize model for diamond_orders
-      } else if (type === 'contact') {
+      } else if (type === 'custom-jewelry') {
+        model = customjwel; // your Sequelize model for contact_messages
+      }  else if (type === 'contactus') {
         model = contactSchema; // your Sequelize model for contact_messages
-      } else {
+      }else {
         return res.status(400).json({
           success: false,
           message: 'Invalid form type',

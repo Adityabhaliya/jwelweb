@@ -6,6 +6,7 @@ const Setting = require('./setting.model')(sequelize);
 const Daimond = require('./daimond.form.model')(sequelize);
 const Banner = require('./banners.model')(sequelize);
 const contactSchema = require('./contact.schema')(sequelize);
+const customjwel = require('./customjwel.model')(sequelize);
 
 module.exports = {
   sequelize,
@@ -15,6 +16,7 @@ module.exports = {
   Setting,
   Daimond,
   Banner,
-  contactSchema
+  contactSchema,
+  customjwel
 
 };
