@@ -356,6 +356,7 @@ exports.access = async (req, res) => {
       status: 200,
       message: 'access_json fetched successfully',
       data: user.access_json,
+      role: user.role,
     });
   } catch (err) {
     console.error(err);
