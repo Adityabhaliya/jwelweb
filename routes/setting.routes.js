@@ -13,7 +13,7 @@ router.post('/upload-file', upload.array('files', 10), (req, res) => {
     return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
-  const baseUrl = "http://10.188.108.187:3001/uploads";
+  const baseUrl = "http://10.187.121.187:3001/uploads";
   const uploadedFiles = req.files.map(file => ({
     file: file.filename,
     path: file.path,
