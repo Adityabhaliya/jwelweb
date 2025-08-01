@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const { User, Setting } = require('../models');
 const bcrypt = require('bcrypt');
 const jwtHelper = require('../config/token');
 const crypto = require('crypto');
@@ -110,7 +110,7 @@ exports.adminlogin = async (req, res) => {
       const user = await User.findOne({
         where: {
           name,
-          is_block:false,
+          is_block: false,
           is_sub_admin: true
         }
       });
@@ -227,6 +227,55 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+
+exports.getSetting = async (req, res) => {
+  try {
+    const { key } = req.query;
+
+    if (!key) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        message: 'Key is required',
+      });
+    }
+
+    const keys = key.split(',').map(k => k.trim());
+
+    const settingData = await Setting.findAll({
+      where: { key: { [Op.in]: keys } },
+    });
+
+    if (!settingData || settingData.length === 0) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: 'No matching setting(s) found',
+      });
+    }
+
+    // Prepare response
+    const result = keys.length === 1
+      ? settingData[0].value
+      : Object.fromEntries(settingData.map(item => [item.key, item.value]));
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Data fetched successfully',
+      data: result,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to fetch setting',
+    });
+  }
+};
+
+
 exports.updateAdminProfile = async (req, res) => {
   try {
     const { name, email, profile } = req.body;
@@ -339,7 +388,7 @@ exports.forgetPassword = async (req, res) => {
       { where: { email } }
     );
 
-    await emailTemp.sendOtpEmail(email, hashedToken ,user.name);
+    await emailTemp.sendOtpEmail(email, hashedToken, user.name);
 
     return res.status(200).json({ success: true, message: 'Password reset email sent successfully', email });
   } catch (error) {
@@ -484,7 +533,7 @@ exports.changeSubadminPassword = async (req, res) => {
 exports.editSubadmin = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, access_json ,is_block } = req.body;
+    const { name, access_json, is_block } = req.body;
 
     const subadmin = await User.findOne({
       where: {
@@ -520,7 +569,7 @@ exports.editSubadmin = async (req, res) => {
 
     // Update fields
     if (name) subadmin.name = name;
-    if (access_json) subadmin.access_json = access_json; 
+    if (access_json) subadmin.access_json = access_json;
     if (is_block) subadmin.is_block = is_block;
 
     await subadmin.save();

@@ -18,6 +18,10 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    category_id: {
+      type: DataTypes.NUMBER,
+      allowNull: true,
+    },
     is_block: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,

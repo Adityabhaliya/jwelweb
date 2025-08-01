@@ -1,4 +1,4 @@
-const { Banner } = require('../models');
+const { Banner, Category } = require('../models');
 
 // CREATE Banner
 exports.createBanner = async (req, res) => {
@@ -15,9 +15,36 @@ exports.createBanner = async (req, res) => {
 // GET All Banners
 exports.getAllBanners = async (req, res) => {
   try {
-    const banners = await Banner.findAll({ where: { deletedAt: null }, order: [['createdAt', 'DESC']] });
-    res.json({ success: true, data: banners });
+    const banners = await Banner.findAll({
+      where: { deletedAt: null },
+      order: [['createdAt', 'DESC']],
+    });
+
+    const bannersData = banners.map(b => b.toJSON());
+
+    // Extract unique category_ids from banners
+    const categoryIds = [...new Set(bannersData.map(b => b.category_id).filter(Boolean))];
+
+    // Fetch category names
+    const categories = await Category.findAll({
+      where: { id: categoryIds },
+      attributes: ['id', 'name'],
+    });
+
+    const categoryMap = {};
+    categories.forEach(cat => {
+      categoryMap[cat.id] = cat.name;
+    });
+
+    // Add category_name to each banner
+    const enrichedBanners = bannersData.map(banner => ({
+      ...banner,
+      category_name: banner.category_id ? categoryMap[banner.category_id] || null : null,
+    }));
+
+    res.json({ success: true, data: enrichedBanners });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: 'Failed to fetch banners' });
   }
 };
@@ -26,10 +53,32 @@ exports.getAllBanners = async (req, res) => {
 exports.getBannerById = async (req, res) => {
   try {
     const banner = await Banner.findByPk(req.params.id);
-    if (!banner) return res.status(404).json({ success: false, message: 'Not found' });
 
-    res.json({ success: true, data: banner });
+    if (!banner) {
+      return res.status(404).json({ success: false, message: 'Banner not found' });
+    }
+
+    const bannerData = banner.toJSON();
+    let categoryName = null;
+
+    if (bannerData.category_id) {
+      const category = await Category.findOne({
+        where: { id: bannerData.category_id },
+        attributes: ['name'],
+      });
+
+      categoryName = category ? category.name : null;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        ...bannerData,
+        category_name: categoryName,
+      },
+    });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: 'Failed to fetch banner' });
   }
 };
