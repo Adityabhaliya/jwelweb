@@ -15,14 +15,20 @@ exports.createBanner = async (req, res) => {
 // GET All Banners
 exports.getAllBanners = async (req, res) => {
   try {
-    const banners = await Banner.findAll({
+    const { page = 1, size = 10, s = '' } = req.query;
+    const { limit, offset } = getPagination(page, size);
+
+    // Fetch banners with pagination
+    const data = await Banner.findAndCountAll({
       where: { deletedAt: null },
+      limit,
+      offset,
       order: [['createdAt', 'DESC']],
     });
 
-    const bannersData = banners.map(b => b.toJSON());
+    const bannersData = data.rows.map(b => b.toJSON());
 
-    // Extract unique category_ids from banners
+    // Extract unique category_ids
     const categoryIds = [...new Set(bannersData.map(b => b.category_id).filter(Boolean))];
 
     // Fetch category names
@@ -42,12 +48,41 @@ exports.getAllBanners = async (req, res) => {
       category_name: banner.category_id ? categoryMap[banner.category_id] || null : null,
     }));
 
-    res.json({ success: true, data: enrichedBanners });
+    // Search filter (case-insensitive, full object search)
+    const filteredBanners = s
+      ? enrichedBanners.filter(banner => 
+          JSON.stringify(banner).toLowerCase().includes(s.toLowerCase())
+        )
+      : enrichedBanners;
+
+    // Paginate after search
+    const pagedData = filteredBanners.slice(0, limit);
+
+    // Prepare paginated response
+    const response = {
+      totalItems: filteredBanners.length,
+      totalPages: Math.ceil(filteredBanners.length / limit),
+      currentPage: Number(page),
+      data: pagedData
+    };
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Banners fetched successfully',
+      data: response,
+    });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Failed to fetch banners' });
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to fetch banners',
+    });
   }
 };
+
 
 // GET Banner by ID
 exports.getBannerById = async (req, res) => {

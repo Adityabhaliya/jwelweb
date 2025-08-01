@@ -54,11 +54,19 @@ exports.getCategoryBySlug = async (req, res) => {
 
 exports.getCategorydropdwon = async (req, res) => {
   try {
-    const category = await Category.findAll({
-      where: { deletedAt: null, parent_category_id: null },
-    });
+    const { type } = req.query;
 
-    if (!category) {
+    let whereCondition = { deletedAt: null };
+
+    if (type === 'banner') {
+      whereCondition.is_block = false;
+    } else {
+      whereCondition.parent_category_id = null;
+    }
+
+    const category = await Category.findAll({ where: whereCondition });
+
+    if (category.length === 0) {
       return res.status(404).json({
         success: false,
         status: 404,
@@ -66,11 +74,12 @@ exports.getCategorydropdwon = async (req, res) => {
       });
     }
 
-    res.json({
+    return res.status(200).json({
       success: true,
       status: 200,
       data: category,
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({
@@ -80,6 +89,7 @@ exports.getCategorydropdwon = async (req, res) => {
     });
   }
 };
+
 
 exports.deleteCategoryBySlug = async (req, res) => {
   try {
