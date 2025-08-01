@@ -1,3 +1,4 @@
+const { getPagination } = require('../config/common');
 const { Banner, Category } = require('../models');
 
 // CREATE Banner
