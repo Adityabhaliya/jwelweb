@@ -7,6 +7,7 @@ router.use('/', require('./category.routes'));
 router.use('/', require('./setting.routes'));
 router.use('/', require('./form.routes'));
 router.use('/', require('./banner.routes'));
+router.use('/', require('./faq.routes'));
 
 
 
