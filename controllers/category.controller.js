@@ -1,6 +1,7 @@
 const { Category, Product } = require('../models');
 const slugify = require('../config/slugify');
 const { getPagination, getPagingData } = require('../config/common');
+const { Op } = require('sequelize');
 // Create Category
 exports.createCategory = async (req, res) => {
   try {
@@ -61,39 +62,17 @@ exports.getCategorydropdwon = async (req, res) => {
       whereCondition.is_block = false;
     }
 
-     const parent = await Category.findOne({
+     const parent = await Category.findAll({
       where: whereCondition,
       attributes: ['id', 'name', 'slug', 'image'],
       order: [['createdAt', 'ASC']]
     });
-
-    if (!parent) {
-      return res.status(404).json({
-        success: false,
-        status: 404,
-        message: 'Parent category not found',
-      });
-    }
-
-    // Step 2: Get children of this parent
-    const children = await Category.findAll({
-      where: {
-        deletedAt: null,
-        parent_category_id: parent.id
-      },
-      attributes: ['id', 'name', 'slug', 'image', 'parent_category_id']
-    });
-
-    // Step 3: Merge parent + children into one array
-    const finalData = [
-      parent.toJSON(),
-      ...children.map(c => c.toJSON())
-    ];
+ 
 
     return res.status(200).json({
       success: true,
       status: 200,
-      data: finalData
+      data: parent
     });
 
   } catch (err) {
@@ -227,6 +206,78 @@ exports.getAllCategories = async (req, res) => {
   }
 };
 
+exports.getAllSubCategories = async (req, res) => {
+  try {
+    const { page = 1, size = 10, s = '' } = req.query;
+    const { limit, offset } = getPagination(page, size);
+
+    // Step 1: Get all main categories (parent_category_id = null)
+    const mainCategories = await Category.findAll({
+      where: { deletedAt: null, parent_category_id: null },
+      attributes: ['id']
+    });
+
+    const mainCategoryIds = mainCategories.map(cat => cat.id);
+
+    if (mainCategoryIds.length === 0) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: 'No main categories found'
+      });
+    }
+
+    // Step 2: Build search condition for subcategories
+    const whereCondition = {
+      deletedAt: null,
+      parent_category_id: { [Op.in]: mainCategoryIds }
+    };
+
+    if (s) {
+      whereCondition[Op.or] = [
+        { name: { [Op.like]: `%${s}%` } },
+        { slug: { [Op.like]: `%${s}%` } }
+      ];
+    }
+
+    // Step 3: Fetch subcategories
+    const data = await Category.findAndCountAll({
+      where: whereCondition,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    // Step 4: Add parent category name
+    const categoriesWithParent = await Promise.all(
+      data.rows.map(async (category) => {
+        const parent = mainCategories.find(p => p.id === category.parent_category_id);
+        return {
+          ...category.toJSON(),
+          parent_category_name: parent ? parent.name : null
+        };
+      })
+    );
+
+    // Step 5: Paginate response
+    const response = getPagingData({ ...data, rows: categoriesWithParent }, page, limit);
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Subcategories fetched successfully',
+      data: response,
+    });
+
+  } catch (err) {
+    console.error('Error fetching subcategories:', err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to get subcategories',
+    });
+  }
+};
 
 // exports.getAllCategories = async (req, res) => {
 //   try {

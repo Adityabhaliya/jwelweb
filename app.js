@@ -8,7 +8,7 @@ const path = require('path'); // Import path module
 require('dotenv').config();
 
 app.use(cors({
-  origin: '*', // 👈 Allow all origins
+  origin: '*',  
   credentials: true
 }));
 

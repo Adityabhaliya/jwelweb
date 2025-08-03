@@ -10,7 +10,7 @@ const { getPagingData, getPagination } = require('../config/common');
 exports.register = async (req, res) => {
   try {
     const { name, lastname, email, password, role } = req.body;
-
+ console.log(req.body )
     if (!email || !password) {
       return res.status(400).json({
         success: false,
