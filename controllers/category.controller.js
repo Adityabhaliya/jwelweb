@@ -106,8 +106,6 @@ exports.getCategorydropdwon = async (req, res) => {
   }
 };
 
-
-
 exports.deleteCategoryBySlug = async (req, res) => {
   try {
     const category = await Category.findOne({ where: { slug: req.params.slug } });
@@ -136,7 +134,6 @@ exports.deleteCategoryBySlug = async (req, res) => {
     });
   }
 };
-
 
 exports.updateCategoryBySlug = async (req, res) => {
   try {
@@ -194,66 +191,38 @@ exports.getAllCategories = async (req, res) => {
     const { page = 1, size = 10, s = '' } = req.query;
     const { limit, offset } = getPagination(page, size);
 
-    // Fetch all categories
-    const categories = await Category.findAll({
-      where: { deletedAt: null },
-      order: [['name', 'ASC']]
-    });
-
-    const map = {};
-    categories.forEach(cat => {
-      map[cat.id] = { ...cat.toJSON(), children: [] };
-    });
-
-    const hierarchy = [];
-    categories.forEach(cat => {
-      if (cat.parent_category_id) {
-        map[cat.parent_category_id]?.children.push(map[cat.id]);
-      } else {
-        hierarchy.push(map[cat.id]);
-      }
-    });
-
-    // Apply search if needed
-    let filteredHierarchy = hierarchy;
+    // Build search condition
+    const whereCondition = { deletedAt: null  ,parent_category_id:null};
     if (s) {
-      const searchLower = s.toLowerCase();
-      const searchRecursive = (nodes) =>
-        nodes
-          .filter(node =>
-            JSON.stringify(node).toLowerCase().includes(searchLower)
-          )
-          .map(node => ({
-            ...node,
-            children: searchRecursive(node.children)
-          }));
-
-      filteredHierarchy = searchRecursive(hierarchy);
+      whereCondition[Op.or] = [
+        { name: { [Op.like]: `%${s}%` } },
+        { slug: { [Op.like]: `%${s}%` } }
+      ];
     }
 
-    // Pagination after search
-    const pagedData = filteredHierarchy.slice(offset, offset + limit);
+    // Fetch with pagination
+    const data = await Category.findAndCountAll({
+      where: whereCondition,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
 
-    const response = {
-      totalItems: filteredHierarchy.length,
-      totalPages: Math.ceil(filteredHierarchy.length / limit),
-      currentPage: Number(page),
-      data: pagedData
-    };
+    // Format paginated data
+    const response = getPagingData(data, page, limit);
 
     res.status(200).json({
       success: true,
       status: 200,
-      message: 'Category hierarchy fetched successfully',
-      data: response
+      message: 'Categories fetched successfully',
+      data: response,
     });
-
   } catch (err) {
-    console.error(err);
+    console.error('Error fetching categories:', err);
     res.status(500).json({
       success: false,
       status: 500,
-      message: 'Failed to fetch category hierarchy'
+      message: 'Failed to get categories',
     });
   }
 };
