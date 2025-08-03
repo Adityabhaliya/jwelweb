@@ -85,6 +85,60 @@ exports.getCategorydropdwon = async (req, res) => {
   }
 };
 
+exports.getsecondCategorydropdwon = async (req, res) => {
+  try {
+    const { type } = req.query;
+
+    // Step 1: Base condition for Level 1 categories
+    let whereCondition = { deletedAt: null, parent_category_id: null };
+    if (type === 'banner') {
+      whereCondition.is_block = false;
+    }
+
+    // Step 2: Get Level 1 categories
+    const parentCategories = await Category.findAll({
+      where: whereCondition,
+      attributes: ['id', 'name', 'slug', 'image'],
+      order: [['createdAt', 'ASC']]
+    });
+
+    const parentIds = parentCategories.map(cat => cat.id);
+
+    if (!parentIds.length) {
+      return res.status(200).json({
+        success: true,
+        status: 200,
+        data: []
+      });
+    }
+
+    // Step 3: Get Level 2 categories (subcategories)
+    const secondLevelCategories = await Category.findAll({
+      where: {
+        deletedAt: null,
+        parent_category_id: { [Op.in]: parentIds }
+      },
+      attributes: ['id', 'name', 'slug', 'image', 'parent_category_id'],
+      order: [['createdAt', 'ASC']]
+    });
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      data: secondLevelCategories
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to fetch category dropdown'
+    });
+  }
+};
+
+
 exports.deleteCategoryBySlug = async (req, res) => {
   try {
     const category = await Category.findOne({ where: { slug: req.params.slug } });
@@ -282,6 +336,99 @@ exports.getAllSubCategories = async (req, res) => {
     });
   }
 };
+
+exports.getAllThirdLevelCategories = async (req, res) => {
+  try {
+    const { page = 1, size = 10, s = '' } = req.query;
+    const { limit, offset } = getPagination(page, size);
+
+    // Step 1: Get main categories (level 1)
+    const mainCategories = await Category.findAll({
+      where: { deletedAt: null, parent_category_id: null },
+      attributes: ['id']
+    });
+    const mainIds = mainCategories.map(cat => cat.id);
+
+    if (!mainIds.length) {
+      return res.status(200).json({
+        success: true,
+        status: 200,
+        message: 'No main categories found',
+        data: []
+      });
+    }
+
+    // Step 2: Get subcategories (level 2)
+    const subCategoriesLvl1 = await Category.findAll({
+      where: { deletedAt: null, parent_category_id: { [Op.in]: mainIds } },
+      attributes: ['id']
+    });
+    const subIdsLvl1 = subCategoriesLvl1.map(cat => cat.id);
+
+    if (!subIdsLvl1.length) {
+      return res.status(200).json({
+        success: true,
+        status: 200,
+        message: 'No subcategories found',
+        data: []
+      });
+    }
+
+    // Step 3: Get sub-subcategories (level 3) → Only these will be returned
+    const whereCondition = {
+      deletedAt: null,
+      parent_category_id: { [Op.in]: subIdsLvl1 }
+    };
+
+    if (s) {
+      whereCondition[Op.or] = [
+        { name: { [Op.like]: `%${s}%` } },
+        { slug: { [Op.like]: `%${s}%` } }
+      ];
+    }
+
+    const data = await Category.findAndCountAll({
+      where: whereCondition,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Step 4: Add parent category name (level 2 name)
+    const parentIds = [...new Set(data.rows.map(cat => cat.parent_category_id).filter(Boolean))];
+    const parents = await Category.findAll({
+      where: { id: parentIds },
+      attributes: ['id', 'name']
+    });
+
+    const parentMap = {};
+    parents.forEach(p => { parentMap[p.id] = p.name; });
+
+    const categoriesWithParent = data.rows.map(cat => ({
+      ...cat.toJSON(),
+      parent_category_name: parentMap[cat.parent_category_id] || null
+    }));
+
+    // Step 5: Paginate response
+    const response = getPagingData({ ...data, rows: categoriesWithParent }, page, limit);
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Third-level categories fetched successfully',
+      data: response
+    });
+
+  } catch (err) {
+    console.error('Error fetching third-level categories:', err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to get third-level categories',
+    });
+  }
+};
+
 
 
 // exports.getAllCategories = async (req, res) => {
