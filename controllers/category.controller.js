@@ -211,26 +211,10 @@ exports.getAllSubCategories = async (req, res) => {
     const { page = 1, size = 10, s = '' } = req.query;
     const { limit, offset } = getPagination(page, size);
 
-    // Step 1: Get all main categories (parent_category_id = null)
-    const mainCategories = await Category.findAll({
-      where: { deletedAt: null, parent_category_id: null },
-      attributes: ['id']
-    });
-
-    const mainCategoryIds = mainCategories.map(cat => cat.id);
-
-    if (mainCategoryIds.length === 0) {
-      return res.status(404).json({
-        success: false,
-        status: 404,
-        message: 'No main categories found'
-      });
-    }
-
-    // Step 2: Build search condition for subcategories
+    // Step 1: Build search condition for subcategories (parent_category_id not null)
     const whereCondition = {
       deletedAt: null,
-      parent_category_id: { [Op.in]: mainCategoryIds }
+      parent_category_id: { [Op.ne]: null }
     };
 
     if (s) {
@@ -240,7 +224,7 @@ exports.getAllSubCategories = async (req, res) => {
       ];
     }
 
-    // Step 3: Fetch subcategories
+    // Step 2: Fetch subcategories with pagination
     const data = await Category.findAndCountAll({
       where: whereCondition,
       limit,
@@ -248,18 +232,38 @@ exports.getAllSubCategories = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
-    // Step 4: Add parent category name
-    const categoriesWithParent = await Promise.all(
-      data.rows.map(async (category) => {
-        const parent = mainCategories.find(p => p.id === category.parent_category_id);
-        return {
-          ...category.toJSON(),
-          parent_category_name: parent ? parent.name : null
-        };
-      })
-    );
+    const subCategories = data.rows.map(cat => cat.toJSON());
 
-    // Step 5: Paginate response
+    if (subCategories.length === 0) {
+      return res.status(200).json({
+        success: true,
+        status: 200,
+        message: 'No subcategories found',
+        data: getPagingData(data, page, limit)
+      });
+    }
+
+    // Step 3: Get all unique parent_category_ids
+    const parentIds = [...new Set(subCategories.map(cat => cat.parent_category_id))];
+
+    // Step 4: Fetch parent category names in one query
+    const parents = await Category.findAll({
+      where: { id: parentIds },
+      attributes: ['id', 'name']
+    });
+
+    const parentMap = {};
+    parents.forEach(parent => {
+      parentMap[parent.id] = parent.name;
+    });
+
+    // Step 5: Attach parent_category_name to each subcategory
+    const categoriesWithParent = subCategories.map(cat => ({
+      ...cat,
+      parent_category_name: parentMap[cat.parent_category_id] || null
+    }));
+
+    // Step 6: Format response
     const response = getPagingData({ ...data, rows: categoriesWithParent }, page, limit);
 
     res.status(200).json({
@@ -278,6 +282,7 @@ exports.getAllSubCategories = async (req, res) => {
     });
   }
 };
+
 
 // exports.getAllCategories = async (req, res) => {
 //   try {
