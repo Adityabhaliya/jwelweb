@@ -9,4 +9,8 @@ router.get('/admin/banner/:id',verifyAdminToken, bannerController.getBannerById)
 router.put('/admin/banner/:id',verifyAdminToken, bannerController.updateBanner);
 router.delete('/admin/banner/:id',verifyAdminToken, bannerController.deleteBanner);
 
+
+router.get('/user/banner', bannerController.getAllBannersUser);
+router.get('/user/banner/:id', bannerController.getBannerByIdUser);
+
 module.exports = router;

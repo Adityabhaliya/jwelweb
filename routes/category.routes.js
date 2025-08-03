@@ -14,4 +14,9 @@ router.get('/admin/product-category',verifyAdminToken, categoryCtrl.getThirdCate
 router.put('/admin/category/:slug',verifyAdminToken, categoryCtrl.updateCategoryBySlug);
 router.delete('/admin/category/:slug',verifyAdminToken, categoryCtrl.deleteCategoryBySlug);
 
+
+router.get('/user/category', categoryCtrl.getAllCategoriesUser); 
+router.get('/user/child-category', categoryCtrl.getAllCategoriesUserchildwise);  
+
+
 module.exports = router;

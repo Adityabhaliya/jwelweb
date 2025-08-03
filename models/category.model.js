@@ -7,12 +7,12 @@ module.exports = (sequelize) => {
     slug: { type: DataTypes.STRING },
     parent_category_id: { type: DataTypes.INTEGER },
     deletedAt: { type: DataTypes.DATE },
-    is_block: { type: DataTypes.BOOLEAN },
-      
-    }, {
-      timestamps: true,   
-      paranoid: true,    
-    });
-   
+    is_block: { type: DataTypes.BOOLEAN ,default: false},
+    is_home: { type: DataTypes.BOOLEAN, default: false },
+
+  }, {
+    timestamps: true,
+    paranoid: true,
+  });
+
 };
-    

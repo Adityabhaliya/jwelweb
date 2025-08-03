@@ -9,6 +9,9 @@ router.get('/admin/faq-list', verifyAdminToken,faqController.getAllFaqs);
 router.get('/admin/faq/:id', verifyAdminToken,faqController.getFaqById);
 router.delete('/admin/faq/:id',verifyAdminToken, faqController.deleteFaq);
 
+
+router.get('/user/faq-list', faqController.getAllFaqsUser);
+
 module.exports = router;
  
  

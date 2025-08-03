@@ -22,6 +22,10 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    is_subscribe: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     timestamps: true,   
     paranoid: true,    

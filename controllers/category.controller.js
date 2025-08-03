@@ -8,6 +8,19 @@ exports.createCategory = async (req, res) => {
     const data = req.body;
     if (data.name) data.slug = slugify(data.name);
 
+    if (data.is_home === true) {
+      const homeCount = await Category.count({
+        where: { is_home: true }
+      });
+
+      if (homeCount >= 4) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          message: 'Only 4 categories can have is_home = true'
+        });
+      }
+    }
     await Category.create(data);
     res.status(201).json({
       success: true,
@@ -234,7 +247,20 @@ exports.updateCategoryBySlug = async (req, res) => {
     const data = req.body;
 
     if (data.name) data.slug = slugify(data.name);
+    if (data.is_home === true && category.is_home !== true) {
+      const homeCount = await Category.count({
+        where: { is_home: true }
+      });
 
+      if (homeCount >= 4) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          message: 'Only 4 categories can have is_home = true'
+        });
+      }
+    }
+    
     const category = await Category.findOne({ where: { slug } });
     let oldName = category.name
     // If the name changed, update all products that reference this category
@@ -489,6 +515,131 @@ exports.getAllThirdLevelCategories = async (req, res) => {
   }
 };
 
+exports.getAllCategoriesUser = async (req, res) => {
+  try {
+    const { page = 1, size = 10, s = '' } = req.query;
+    const { limit, offset } = getPagination(page, size);
+
+    // Build search condition
+    const whereCondition = { deletedAt: null ,is_block:false ,is_home:true,parent_category_id:null};
+    if (s) {
+      whereCondition[Op.or] = [
+        { name: { [Op.like]: `%${s}%` } },
+        { slug: { [Op.like]: `%${s}%` } }
+      ];
+    }
+
+    // Fetch with pagination
+    const data = await Category.findAndCountAll({
+      where: whereCondition,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    // Format paginated data
+    const response = getPagingData(data, page, limit);
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Categories fetched successfully',
+      data: response,
+    });
+  } catch (err) {
+    console.error('Error fetching categories:', err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to get categories',
+    });
+  }
+};
+
+
+exports.getAllCategoriesUserchildwise = async (req, res) => {
+  try {
+    const { page = 1, size = 10, s = '' } = req.query;
+    const { limit, offset } = getPagination(page, size);
+
+    // Build search condition for Level 1
+    const whereCondition = {
+      deletedAt: null,
+      is_block: false,
+       parent_category_id: null
+    };
+
+    if (s) {
+      whereCondition[Op.or] = [
+        { name: { [Op.like]: `%${s}%` } },
+        { slug: { [Op.like]: `%${s}%` } }
+      ];
+    }
+
+    // Fetch Level 1 categories
+    const level1Data = await Category.findAndCountAll({
+      where: whereCondition,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+      attributes: ['id', 'name', 'slug', 'image']
+    });
+
+    const level1Ids = level1Data.rows.map(cat => cat.id);
+
+    // Fetch Level 2 categories
+    const level2Data = await Category.findAll({
+      where: { deletedAt: null, is_block: false, parent_category_id: { [Op.in]: level1Ids } },
+      attributes: ['id', 'name', 'slug', 'image', 'parent_category_id']
+    });
+
+    const level2Ids = level2Data.map(cat => cat.id);
+
+    // Fetch Level 3 categories
+    const level3Data = await Category.findAll({
+      where: { deletedAt: null, is_block: false, parent_category_id: { [Op.in]: level2Ids } },
+      attributes: ['id', 'name', 'slug', 'image', 'parent_category_id']
+    });
+
+    // Organize hierarchy
+    const hierarchy = level1Data.rows.map(l1 => {
+      const l2Children = level2Data
+        .filter(l2 => l2.parent_category_id === l1.id)
+        .map(l2 => ({
+          ...l2.toJSON(),
+          children: level3Data.filter(l3 => l3.parent_category_id === l2.id)
+        }));
+
+      return {
+        ...l1.toJSON(),
+        children: l2Children
+      };
+    });
+
+    // Pagination response
+    const response = {
+      totalItems: level1Data.count,
+      totalPages: Math.ceil(level1Data.count / limit),
+      currentPage: Number(page),
+      data: hierarchy
+    };
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Categories fetched successfully',
+      data: response,
+    });
+
+  } catch (err) {
+    console.error('Error fetching categories:', err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to get categories',
+    });
+  }
+};
 
 
 // exports.getAllCategories = async (req, res) => {

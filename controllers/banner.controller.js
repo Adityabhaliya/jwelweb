@@ -51,9 +51,9 @@ exports.getAllBanners = async (req, res) => {
 
     // Search filter (case-insensitive, full object search)
     const filteredBanners = s
-      ? enrichedBanners.filter(banner => 
-          JSON.stringify(banner).toLowerCase().includes(s.toLowerCase())
-        )
+      ? enrichedBanners.filter(banner =>
+        JSON.stringify(banner).toLowerCase().includes(s.toLowerCase())
+      )
       : enrichedBanners;
 
     // Paginate after search
@@ -146,5 +146,113 @@ exports.deleteBanner = async (req, res) => {
     res.json({ success: true, message: 'Deleted successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Delete failed' });
+  }
+};
+
+
+
+
+exports.getAllBannersUser = async (req, res) => {
+  try {
+    const { page = 1, size = 10, s = '' } = req.query;
+    const { limit, offset } = getPagination(page, size);
+
+    // Fetch banners with pagination
+    const data = await Banner.findAndCountAll({
+      where: { deletedAt: null, is_block: false },
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    const bannersData = data.rows.map(b => b.toJSON());
+
+    // Extract unique category_ids
+    const categoryIds = [...new Set(bannersData.map(b => b.category_id).filter(Boolean))];
+
+    // Fetch category names
+    const categories = await Category.findAll({
+      where: { id: categoryIds },
+      attributes: ['id', 'name'],
+    });
+
+    const categoryMap = {};
+    categories.forEach(cat => {
+      categoryMap[cat.id] = cat.name;
+    });
+
+    // Add category_name to each banner
+    const enrichedBanners = bannersData.map(banner => ({
+      ...banner,
+      category_name: banner.category_id ? categoryMap[banner.category_id] || null : null,
+    }));
+
+    // Search filter (case-insensitive, full object search)
+    const filteredBanners = s
+      ? enrichedBanners.filter(banner =>
+        JSON.stringify(banner).toLowerCase().includes(s.toLowerCase())
+      )
+      : enrichedBanners;
+
+    // Paginate after search
+    const pagedData = filteredBanners.slice(0, limit);
+
+    // Prepare paginated response
+    const response = {
+      totalItems: filteredBanners.length,
+      totalPages: Math.ceil(filteredBanners.length / limit),
+      currentPage: Number(page),
+      data: pagedData
+    };
+
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Banners fetched successfully',
+      data: response,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to fetch banners',
+    });
+  }
+};
+
+
+// GET Banner by ID
+exports.getBannerByIdUser = async (req, res) => {
+  try {
+    const banner = await Banner.findByPk(req.params.id);
+
+    if (!banner) {
+      return res.status(404).json({ success: false, message: 'Banner not found' });
+    }
+
+    const bannerData = banner.toJSON();
+    let categoryName = null;
+
+    if (bannerData.category_id) {
+      const category = await Category.findOne({
+        where: { id: bannerData.category_id },
+        attributes: ['name'],
+      });
+
+      categoryName = category ? category.name : null;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        ...bannerData,
+        category_name: categoryName,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to fetch banner' });
   }
 };

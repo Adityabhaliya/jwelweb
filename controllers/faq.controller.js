@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const { faqs } = require("../models");
 const { getPagination } = require("../config/common");
 
@@ -118,5 +118,52 @@ exports.deleteFaq = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'Failed to delete FAQ' });
+    }
+};
+
+
+exports.getAllFaqsUser = async (req, res) => {
+    try {
+        const { page = 1, size = 10, s = '' } = req.query;
+        const { limit, offset } = getPagination(page, size);
+
+        const data = await faqs.findAndCountAll({
+            where:{is_block:false},
+            limit,
+            offset,
+            order: [['createdAt', 'DESC']],
+        });
+
+        const faqsData = data.rows.map(faq => faq.toJSON());
+
+        const filteredFaqs = s
+            ? faqsData.filter(faq =>
+                JSON.stringify(faq).toLowerCase().includes(s.toLowerCase())
+            )
+            : faqsData;
+
+        const pagedData = filteredFaqs.slice(0, limit);
+
+        const response = {
+            totalItems: filteredFaqs.length,
+            totalPages: Math.ceil(filteredFaqs.length / limit),
+            currentPage: Number(page),
+            data: pagedData
+        };
+
+        res.status(200).json({
+            success: true,
+            status: 200,
+            message: 'FAQs fetched successfully',
+            data: response,
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            success: false,
+            status: 500,
+            message: 'Failed to fetch FAQs',
+        });
     }
 };
