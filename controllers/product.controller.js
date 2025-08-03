@@ -186,7 +186,7 @@ exports.deleteProductBySlug = async (req, res) => {
       });
     }
 
-    await product.update({ deletedAt: new Date() });
+    await product.destroy();
 
     res.status(200).json({
       success: true,
