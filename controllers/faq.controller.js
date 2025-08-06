@@ -6,7 +6,7 @@ exports.createFaq = async (req, res) => {
     try {
         const { question, answer, is_block } = req.body;
 
-        const faq = await faqs.create({ question, answer, is_block :false});
+        const faq = await faqs.create({ question, answer, is_block: false });
 
         res.status(201).json({
             success: true,
@@ -124,38 +124,17 @@ exports.deleteFaq = async (req, res) => {
 
 exports.getAllFaqsUser = async (req, res) => {
     try {
-        const { page = 1, size = 10, s = '' } = req.query;
-        const { limit, offset } = getPagination(page, size);
 
-        const data = await faqs.findAndCountAll({
-            where:{is_block:false},
-            limit,
-            offset,
+        const data = await faqs.findAll({
+            where: { is_block: false },
+
             order: [['createdAt', 'DESC']],
         });
-
-        const faqsData = data.rows.map(faq => faq.toJSON());
-
-        const filteredFaqs = s
-            ? faqsData.filter(faq =>
-                JSON.stringify(faq).toLowerCase().includes(s.toLowerCase())
-            )
-            : faqsData;
-
-        const pagedData = filteredFaqs.slice(0, limit);
-
-        const response = {
-            totalItems: filteredFaqs.length,
-            totalPages: Math.ceil(filteredFaqs.length / limit),
-            currentPage: Number(page),
-            data: pagedData
-        };
-
         res.status(200).json({
             success: true,
             status: 200,
             message: 'FAQs fetched successfully',
-            data: response,
+            data: data,
         });
 
     } catch (err) {
