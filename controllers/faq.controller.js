@@ -42,48 +42,50 @@ exports.updateFaq = async (req, res) => {
 // Get All FAQs (with pagination & search)
 exports.getAllFaqs = async (req, res) => {
     try {
-        const { page = 1, size = 10, s = '' } = req.query;
-        const { limit, offset } = getPagination(page, size);
-
-        const data = await faqs.findAndCountAll({
-            limit,
-            offset,
-            order: [['createdAt', 'DESC']],
-        });
-
-        const faqsData = data.rows.map(faq => faq.toJSON());
-
-        const filteredFaqs = s
-            ? faqsData.filter(faq =>
-                JSON.stringify(faq).toLowerCase().includes(s.toLowerCase())
-            )
-            : faqsData;
-
-        const pagedData = filteredFaqs.slice(0, limit);
-
-        const response = {
-            totalItems: filteredFaqs.length,
-            totalPages: Math.ceil(filteredFaqs.length / limit),
-            currentPage: Number(page),
-            data: pagedData
-        };
-
-        res.status(200).json({
-            success: true,
-            status: 200,
-            message: 'FAQs fetched successfully',
-            data: response,
-        });
-
+      const { page = 1, size = 10, s = '' } = req.query;
+      const { limit, offset } = getPagination(page, size);
+  
+      // Build search condition
+      const whereCondition = {};
+      if (s) {
+        whereCondition[Op.or] = [
+          { question: { [Op.like]: `%${s}%` } },
+          { answer: { [Op.like]: `%${s}%` } }
+        ];
+      }
+  
+      // Fetch FAQs with pagination and search
+      const data = await faqs.findAndCountAll({
+        where: whereCondition,
+        limit,
+        offset,
+        order: [['createdAt', 'DESC']]
+      });
+  
+      // Prepare paginated response
+      const response = {
+        totalItems: data.count,
+        totalPages: Math.ceil(data.count / limit),
+        currentPage: Number(page),
+        data: data.rows
+      };
+  
+      res.status(200).json({
+        success: true,
+        status: 200,
+        message: 'FAQs fetched successfully',
+        data: response,
+      });
+  
     } catch (err) {
-        console.error(err);
-        res.status(500).json({
-            success: false,
-            status: 500,
-            message: 'Failed to fetch FAQs',
-        });
+      console.error('Error fetching FAQs:', err);
+      res.status(500).json({
+        success: false,
+        status: 500,
+        message: 'Failed to fetch FAQs',
+      });
     }
-};
+  };
 
 // Get FAQ by ID
 exports.getFaqById = async (req, res) => {
