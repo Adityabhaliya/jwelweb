@@ -5,7 +5,8 @@ const { verifyAdminToken } = require('../config/token');
 const upload = require('../config/upload');
 
 router.get('/admin/get-setting', verifyAdminToken, settingController.getAllSettings);
-router.post('/admin/setting', verifyAdminToken, settingController.createOrUpdateSetting);
+router.post('/admin/setting', verifyAdminToken, settingController.createOrUpdateSetting); 
+router.patch('/user/xlsx',  settingController.downloadSettingsExcelFile);
 
 
 router.post('/upload-file', upload.array('files', 10), (req, res) => {

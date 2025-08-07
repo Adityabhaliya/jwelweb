@@ -77,3 +77,28 @@ exports.createOrUpdateSetting = async (req, res) => {
   }
 };
 
+exports.downloadSettingsExcelFile = async (req, res) => {
+  try {
+    const fileName = '1753806438811-710153978.xlsx';
+    const filePath = path.join(__dirname, '..', 'upload', fileName);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: 'File not found',
+      });
+    }
+
+    res.download(filePath, fileName); // This sends the file as download
+
+  } catch (error) {
+    console.error('Error sending file:', error);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to download file',
+      error: error.message,
+    });
+  }
+};
