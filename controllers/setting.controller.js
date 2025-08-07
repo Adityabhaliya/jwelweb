@@ -1,6 +1,7 @@
- 
-const { Setting } = require('../models');
 
+const { Setting } = require('../models');
+const path = require('path')
+const fs = require('fs')
 exports.getAllSettings = async (req, res) => {
   try {
     const settings = await Setting.findAll({
@@ -80,8 +81,8 @@ exports.createOrUpdateSetting = async (req, res) => {
 exports.downloadSettingsExcelFile = async (req, res) => {
   try {
     const fileName = '1753806438811-710153978.xlsx';
-    const filePath = path.join(__dirname, '..', 'upload', fileName);
-
+    const filePath = path.join(__dirname, '..', 'uploads', fileName);
+    console.log(filePath, "filePath")
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
