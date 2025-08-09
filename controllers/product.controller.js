@@ -388,8 +388,7 @@ exports.getAllProductsUserCatSlug = async (req, res) => {
 
 exports.getAllProductsUserRecommand = async (req, res) => {
   try {
-    const { page = 1, size = 10, s = '', slug } = req.query;
-    const { limit, offset } = getPagination(page, size);
+    const { s = '', slug } = req.query;
 
     if (!slug) {
       return res.status(400).json({
@@ -419,16 +418,14 @@ exports.getAllProductsUserRecommand = async (req, res) => {
       category: category.name
     };
 
-    // Step 3: Fetch products with pagination
-    const data = await Product.findAndCountAll({
+    // Step 3: Fetch all products (no pagination)
+    let products = await Product.findAll({
       where: whereCondition,
-      limit,
-      offset,
       order: [['createdAt', 'DESC']]
     });
 
     // Step 4: Convert to plain objects
-    let products = data.rows.map(product => product.toJSON());
+    products = products.map(product => product.toJSON());
 
     // Step 5: Search filter on JSON
     if (s) {
@@ -437,22 +434,12 @@ exports.getAllProductsUserRecommand = async (req, res) => {
       );
     }
 
-    // Step 6: Manual pagination after search
-    const pagedData = products.slice(0, limit);
-
-    // Step 7: Response
-    const response = {
-      totalItems: products.length,
-      totalPages: Math.ceil(products.length / limit),
-      currentPage: Number(page),
-      data: pagedData
-    };
-
+    // Step 6: Response (all products, no pagination)
     res.status(200).json({
       success: true,
       status: 200,
       message: 'Products fetched successfully',
-      data: response
+      data: products
     });
 
   } catch (err) {
@@ -464,6 +451,7 @@ exports.getAllProductsUserRecommand = async (req, res) => {
     });
   }
 };
+
 
 exports.getProductBySlugUser = async (req, res) => {
   try {
