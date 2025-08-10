@@ -124,7 +124,7 @@ exports.adminlogin = async (req, res) => {
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(401).json({
+        return res.status(200).json({
           success: false,
           status: 401,
           message: 'Invalid credentials',
