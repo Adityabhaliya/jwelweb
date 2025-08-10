@@ -521,11 +521,16 @@ exports.getAllThirdLevelCategories = async (req, res) => {
 
 exports.getAllCategoriesUser = async (req, res) => {
   try {
-    const { page = 1, size = 10, s = '' } = req.query;
-    const { limit, offset } = getPagination(page, size);
+    const { s = '' } = req.query;
 
     // Build search condition
-    const whereCondition = { deletedAt: null ,is_block:false ,is_home:true,parent_category_id:null};
+    const whereCondition = { 
+      deletedAt: null, 
+      is_block: false, 
+      is_home: true, 
+      parent_category_id: null 
+    };
+
     if (s) {
       whereCondition[Op.or] = [
         { name: { [Op.like]: `%${s}%` } },
@@ -533,22 +538,17 @@ exports.getAllCategoriesUser = async (req, res) => {
       ];
     }
 
-    // Fetch with pagination
-    const data = await Category.findAndCountAll({
+    // Fetch without pagination
+    const categories = await Category.findAll({
       where: whereCondition,
-      limit,
-      offset,
       order: [['createdAt', 'DESC']],
     });
-
-    // Format paginated data
-    const response = getPagingData(data, page, limit);
 
     res.status(200).json({
       success: true,
       status: 200,
       message: 'Categories fetched successfully',
-      data: response,
+      data: categories,
     });
   } catch (err) {
     console.error('Error fetching categories:', err);
@@ -559,6 +559,7 @@ exports.getAllCategoriesUser = async (req, res) => {
     });
   }
 };
+
 
 
 exports.getAllCategoriesUserchildwise = async (req, res) => {
