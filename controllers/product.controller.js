@@ -294,6 +294,45 @@ exports.getAllProductsUserNew = async (req, res) => {
   }
 };
 
+exports.getAllProductsUserFeatured = async (req, res) => {
+  try {
+    const { s = '' } = req.query;
+
+    // Step 1: Fetch all products without pagination
+    const products = await Product.findAll({
+      where: { deletedAt: null, is_featured: true },
+      order: [['createdAt', 'DESC']],
+    });
+
+    // Step 2: Convert to plain JSON
+    const productList = products.map(product => product.toJSON());
+
+    // Step 3: Apply search filter if `s` is provided
+    const filteredProducts = s
+      ? productList.filter(product => {
+          const productString = JSON.stringify(product).toLowerCase();
+          return productString.includes(s.toLowerCase());
+        })
+      : productList;
+
+    // Step 4: Send response
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'Products fetched successfully',
+      data: filteredProducts,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: 'Failed to get products',
+    });
+  }
+};
+
 
 exports.getAllProductsUserGlobel = async (req, res) => {
   try {

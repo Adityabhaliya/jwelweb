@@ -41,6 +41,10 @@ module.exports = (sequelize) => {
     },
     is_size: {
       type: DataTypes.BOOLEAN,
+      defaultValue: false, 
+    },
+    is_featured: {
+      type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
     price: {
