@@ -246,7 +246,20 @@ exports.updateCategoryBySlug = async (req, res) => {
     const { slug } = req.params;
     const data = req.body;
 
+    // Fetch category first
+    const category = await Category.findOne({ where: { slug } });
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: 'Category not found',
+      });
+    }
+
     if (data.name) data.slug = slugify(data.name);
+
+    // Check is_home limit
     if (data.is_home === true && category.is_home !== true) {
       const homeCount = await Category.count({
         where: { is_home: true }
@@ -260,32 +273,21 @@ exports.updateCategoryBySlug = async (req, res) => {
         });
       }
     }
-    
-    const category = await Category.findOne({ where: { slug } });
-    let oldName = category.name
+
+    let oldName = category.name;
+
     // If the name changed, update all products that reference this category
     if (data.name && data.name !== oldName) {
-      // Find all products that have this category in their category field
       const products = await Product.findAll({
-        where: {
-          category: oldName // Look for products with the old category name
-        }
+        where: { category: oldName }
       });
 
-      // Update each product's category to the new name
       await Promise.all(products.map(product =>
         Product.update(
           { category: data.name },
           { where: { id: product.id } }
         )
       ));
-    }
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        status: 404,
-        message: 'Category not found',
-      });
     }
 
     await category.update(data);
@@ -295,6 +297,7 @@ exports.updateCategoryBySlug = async (req, res) => {
       status: 200,
       message: 'Category updated successfully',
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({
@@ -304,6 +307,7 @@ exports.updateCategoryBySlug = async (req, res) => {
     });
   }
 };
+
 
 exports.getAllCategories = async (req, res) => {
   try {
