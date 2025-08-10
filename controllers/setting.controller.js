@@ -3,6 +3,8 @@ const { Setting } = require('../models');
 const path = require('path')
 const fs = require('fs');
 const settingModel = require('../models/setting.model');
+const axios = require('axios');
+ 
 exports.getAllSettings = async (req, res) => {
   try {
     const settings = await Setting.findAll({
@@ -79,13 +81,15 @@ exports.createOrUpdateSetting = async (req, res) => {
   }
 };
 
+
+
 exports.downloadSettingsExcelFile = async (req, res) => {
   try {
-    const fileName = 'bliss-size';
-    // const filePath = path.join(__dirname, '..', 'uploads', fileName);
-    const settings = await Setting.findOne({where:{ key: "diamond_sheet" }})
-    console.log(settings.value, "filePath")
-    if (!settings.value) {
+    const fileName = 'bliss-size.xlsx';
+
+    const settings = await Setting.findOne({ where: { key: "diamond_sheet" } });
+
+    if (!settings || !settings.value) {
       return res.status(404).json({
         success: false,
         status: 404,
@@ -93,7 +97,20 @@ exports.downloadSettingsExcelFile = async (req, res) => {
       });
     }
 
-    res.download(settings.value, fileName); // This sends the file as download
+    const fileUrl = settings.value;
+
+    // Set headers so browser downloads it
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+    // Fetch and pipe the file to response
+    const fileStream = await axios({
+      method: 'GET',
+      url: fileUrl,
+      responseType: 'stream',
+    });
+
+    fileStream.data.pipe(res);
 
   } catch (error) {
     console.error('Error sending file:', error);
@@ -105,3 +122,4 @@ exports.downloadSettingsExcelFile = async (req, res) => {
     });
   }
 };
+
