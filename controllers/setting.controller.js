@@ -1,7 +1,8 @@
 
 const { Setting } = require('../models');
 const path = require('path')
-const fs = require('fs')
+const fs = require('fs');
+const settingModel = require('../models/setting.model');
 exports.getAllSettings = async (req, res) => {
   try {
     const settings = await Setting.findAll({
@@ -80,10 +81,11 @@ exports.createOrUpdateSetting = async (req, res) => {
 
 exports.downloadSettingsExcelFile = async (req, res) => {
   try {
-    const fileName = '1753806438811-710153978.xlsx';
-    const filePath = path.join(__dirname, '..', 'uploads', fileName);
-    console.log(filePath, "filePath")
-    if (!fs.existsSync(filePath)) {
+    const fileName = 'bliss-size';
+    // const filePath = path.join(__dirname, '..', 'uploads', fileName);
+    const setting = await settingModel.findOne({ key: "diamond_sheet" })
+    console.log(setting.value, "filePath")
+    if (!fs.existsSync(setting.value)) {
       return res.status(404).json({
         success: false,
         status: 404,
@@ -91,7 +93,7 @@ exports.downloadSettingsExcelFile = async (req, res) => {
       });
     }
 
-    res.download(filePath, fileName); // This sends the file as download
+    res.download(setting.value, fileName); // This sends the file as download
 
   } catch (error) {
     console.error('Error sending file:', error);
