@@ -9,7 +9,7 @@ const { verifyAdminToken, verifyUserToken } = require('../config/token');
 router.post('/user/register', userController.register);
 router.post('/user/login', userController.login);
 router.get('/user/profile', verifyUserToken, userController.getProfile); 
-router.get('/user/setting', verifyUserToken, userController.getSetting); 
+router.get('/user/setting',  userController.getSetting); 
 
 
 router.post('/admin/login', userController.adminlogin);
