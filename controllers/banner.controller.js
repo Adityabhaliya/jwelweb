@@ -61,7 +61,7 @@ exports.getAllBanners = async (req, res) => {
 
     // Prepare paginated response
     const response = {
-      totalItems: filteredBanners.length,
+      totalItems: data.count,
       totalPages: Math.ceil(filteredBanners.length / limit),
       currentPage: Number(page),
       data: pagedData

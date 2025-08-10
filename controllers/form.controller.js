@@ -88,7 +88,7 @@ exports.getAllform = async (req, res) => {
     // Paginate manually after search
     const paginated = filtered.slice(0, limit);
     const response = {
-      totalItems: filtered.length,
+      totalItems: data.count,
       totalPages: Math.ceil(filtered.length / limit),
       currentPage: Number(page),
       data: paginated
