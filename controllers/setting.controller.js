@@ -83,9 +83,9 @@ exports.downloadSettingsExcelFile = async (req, res) => {
   try {
     const fileName = 'bliss-size';
     // const filePath = path.join(__dirname, '..', 'uploads', fileName);
-    const setting = await settingModel.findOne({ key: "diamond_sheet" })
-    console.log(setting.value, "filePath")
-    if (!fs.existsSync(setting.value)) {
+    const settings = await Setting.findOne({where:{ key: "diamond_sheet" }})
+    console.log(settings.value, "filePath")
+    if (!fs.existsSync(settings.value)) {
       return res.status(404).json({
         success: false,
         status: 404,
@@ -93,7 +93,7 @@ exports.downloadSettingsExcelFile = async (req, res) => {
       });
     }
 
-    res.download(setting.value, fileName); // This sends the file as download
+    res.download(settings.value, fileName); // This sends the file as download
 
   } catch (error) {
     console.error('Error sending file:', error);
