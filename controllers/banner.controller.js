@@ -154,18 +154,13 @@ exports.deleteBanner = async (req, res) => {
 
 exports.getAllBannersUser = async (req, res) => {
   try {
-    const { page = 1, size = 10, s = '' } = req.query;
-    const { limit, offset } = getPagination(page, size);
+    const { s = '' } = req.query;
 
-    // Fetch banners with pagination
-    const data = await Banner.findAndCountAll({
+    // Fetch all banners (no pagination)
+    const bannersData = await Banner.findAll({
       where: { deletedAt: null, is_block: false },
-      limit,
-      offset,
       order: [['createdAt', 'DESC']],
-    });
-
-    const bannersData = data.rows.map(b => b.toJSON());
+    }).then(banners => banners.map(b => b.toJSON()));
 
     // Extract unique category_ids
     const categoryIds = [...new Set(bannersData.map(b => b.category_id).filter(Boolean))];
@@ -190,26 +185,15 @@ exports.getAllBannersUser = async (req, res) => {
     // Search filter (case-insensitive, full object search)
     const filteredBanners = s
       ? enrichedBanners.filter(banner =>
-        JSON.stringify(banner).toLowerCase().includes(s.toLowerCase())
-      )
+          JSON.stringify(banner).toLowerCase().includes(s.toLowerCase())
+        )
       : enrichedBanners;
-
-    // Paginate after search
-    const pagedData = filteredBanners.slice(0, limit);
-
-    // Prepare paginated response
-    const response = {
-      totalItems: filteredBanners.length,
-      totalPages: Math.ceil(filteredBanners.length / limit),
-      currentPage: Number(page),
-      data: pagedData
-    };
 
     res.status(200).json({
       success: true,
       status: 200,
       message: 'Banners fetched successfully',
-      data: response,
+      data: filteredBanners,
     });
 
   } catch (err) {
@@ -221,6 +205,7 @@ exports.getAllBannersUser = async (req, res) => {
     });
   }
 };
+
 
 
 // GET Banner by ID
