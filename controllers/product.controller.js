@@ -82,7 +82,7 @@ exports.getAllProducts = async (req, res) => {
     const pagedData = filteredProducts.slice(0, limit);
 
     const response = {
-      totalItems: filteredProducts.length,
+      totalItems: data.count,
       totalPages: Math.ceil(filteredProducts.length / limit),
       currentPage: Number(page) || 1,
       data: pagedData
