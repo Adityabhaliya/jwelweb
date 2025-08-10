@@ -4,7 +4,7 @@ const path = require('path')
 const fs = require('fs');
 const settingModel = require('../models/setting.model');
 const axios = require('axios');
- 
+
 exports.getAllSettings = async (req, res) => {
   try {
     const settings = await Setting.findAll({
@@ -123,3 +123,45 @@ exports.downloadSettingsExcelFile = async (req, res) => {
   }
 };
 
+exports.downloadSettingsPdfFile = async (req, res) => {
+  try {
+    const fileName = "bliss-ring-size.pdf";
+
+    const settings = await Setting.findOne({ where: { key: "ring_size_print" } });
+
+    if (!settings || !settings.value) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "File not found",
+      });
+    }
+
+    const fileUrl = settings.value;
+
+    // Set headers for PDF download
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileName}"`
+    );
+    res.setHeader("Content-Type", "application/pdf");
+
+    // Fetch and stream the PDF
+    const fileStream = await axios({
+      method: "GET",
+      url: fileUrl,
+      responseType: "stream",
+    });
+
+    fileStream.data.pipe(res);
+
+  } catch (error) {
+    console.error("Error sending PDF file:", error);
+    res.status(500).json({
+      success: false,
+      status: 500,
+      message: "Failed to download PDF file",
+      error: error.message,
+    });
+  }
+};

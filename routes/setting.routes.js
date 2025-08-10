@@ -6,7 +6,8 @@ const upload = require('../config/upload');
 
 router.get('/admin/get-setting', verifyAdminToken, settingController.getAllSettings);
 router.post('/admin/setting', verifyAdminToken, settingController.createOrUpdateSetting); 
-router.get('/user/xlsx',  settingController.downloadSettingsExcelFile);
+router.get('/user/xlsx',  settingController.downloadSettingsExcelFile); 
+router.get('/user/pdf',  settingController.downloadSettingsPdfFile);
 
 
 router.post('/upload-file', upload.array('files', 10), (req, res) => {
