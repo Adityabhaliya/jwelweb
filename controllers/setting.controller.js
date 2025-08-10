@@ -85,7 +85,7 @@ exports.downloadSettingsExcelFile = async (req, res) => {
     // const filePath = path.join(__dirname, '..', 'uploads', fileName);
     const settings = await Setting.findOne({where:{ key: "diamond_sheet" }})
     console.log(settings.value, "filePath")
-    if (!fs.existsSync(settings.value)) {
+    if (!settings.value) {
       return res.status(404).json({
         success: false,
         status: 404,
