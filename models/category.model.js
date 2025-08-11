@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
     deletedAt: { type: DataTypes.DATE },
     is_block: { type: DataTypes.BOOLEAN ,default: false},
     is_home: { type: DataTypes.BOOLEAN, default: false },
+    is_header: { type: DataTypes.BOOLEAN, default: false },
 
   }, {
     timestamps: true,
