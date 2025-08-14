@@ -111,7 +111,8 @@ exports.adminlogin = async (req, res) => {
         where: {
           name,
           is_block: false,
-          is_sub_admin: true
+          is_sub_admin: true,
+          deletedAt:null
         }
       });
       if (!user) {
