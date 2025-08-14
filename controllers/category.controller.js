@@ -429,7 +429,8 @@ exports.getAllSubCategories = async (req, res) => {
 
 exports.getAllThirdLevelCategories = async (req, res) => {
   try {
-    const { s = '' } = req.query;
+    const { page = 1, size = 10, s = '' } = req.query;
+    const { limit, offset } = getPagination(page, size);
 
     // Step 1: Get main categories (level 1)
     const mainCategories = await Category.findAll({
@@ -476,13 +477,15 @@ exports.getAllThirdLevelCategories = async (req, res) => {
       ];
     }
 
-    const data = await Category.findAll({
+    const data = await Category.findAndCountAll({
       where: whereCondition,
+      limit,
+      offset,
       order: [['createdAt', 'DESC']]
     });
 
     // Step 4: Add parent category name (level 2 name)
-    const parentIds = [...new Set(data.map(cat => cat.parent_category_id).filter(Boolean))];
+    const parentIds = [...new Set(data.rows.map(cat => cat.parent_category_id).filter(Boolean))];
     const parents = await Category.findAll({
       where: { id: parentIds },
       attributes: ['id', 'name']
@@ -491,17 +494,19 @@ exports.getAllThirdLevelCategories = async (req, res) => {
     const parentMap = {};
     parents.forEach(p => { parentMap[p.id] = p.name; });
 
-    const categoriesWithParent = data.map(cat => ({
+    const categoriesWithParent = data.rows.map(cat => ({
       ...cat.toJSON(),
       parent_category_name: parentMap[cat.parent_category_id] || null
     }));
 
-    // Step 5: Return all results (no pagination)
+    // Step 5: Paginate response
+    const response = getPagingData({ ...data, rows: categoriesWithParent }, page, limit);
+
     res.status(200).json({
       success: true,
       status: 200,
       message: 'Third-level categories fetched successfully',
-      data: categoriesWithParent
+      data: response
     });
 
   } catch (err) {
@@ -513,7 +518,6 @@ exports.getAllThirdLevelCategories = async (req, res) => {
     });
   }
 };
-
 
 exports.getAllCategoriesUser = async (req, res) => {
   try {
@@ -560,14 +564,13 @@ exports.getAllCategoriesUser = async (req, res) => {
 
 exports.getAllCategoriesUserchildwise = async (req, res) => {
   try {
-    const { page = 1, size = 10, s = '' } = req.query;
-    const { limit, offset } = getPagination(page, size);
+    const { s = '' } = req.query;
 
     // Build search condition for Level 1
     const whereCondition = {
       deletedAt: null,
       is_block: false,
-       parent_category_id: null
+      parent_category_id: null
     };
 
     if (s) {
@@ -578,15 +581,13 @@ exports.getAllCategoriesUserchildwise = async (req, res) => {
     }
 
     // Fetch Level 1 categories
-    const level1Data = await Category.findAndCountAll({
+    const level1Data = await Category.findAll({
       where: whereCondition,
-      limit,
-      offset,
       order: [['createdAt', 'DESC']],
       attributes: ['id', 'name', 'slug', 'image']
     });
 
-    const level1Ids = level1Data.rows.map(cat => cat.id);
+    const level1Ids = level1Data.map(cat => cat.id);
 
     // Fetch Level 2 categories
     const level2Data = await Category.findAll({
@@ -603,7 +604,7 @@ exports.getAllCategoriesUserchildwise = async (req, res) => {
     });
 
     // Organize hierarchy
-    const hierarchy = level1Data.rows.map(l1 => {
+    const hierarchy = level1Data.map(l1 => {
       const l2Children = level2Data
         .filter(l2 => l2.parent_category_id === l1.id)
         .map(l2 => ({
@@ -617,19 +618,11 @@ exports.getAllCategoriesUserchildwise = async (req, res) => {
       };
     });
 
-    // Pagination response
-    const response = {
-      totalItems: level1Data.count,
-      totalPages: Math.ceil(level1Data.count / limit),
-      currentPage: Number(page),
-      data: hierarchy
-    };
-
     res.status(200).json({
       success: true,
       status: 200,
       message: 'Categories fetched successfully',
-      data: response,
+      data: hierarchy
     });
 
   } catch (err) {
@@ -637,10 +630,11 @@ exports.getAllCategoriesUserchildwise = async (req, res) => {
     res.status(500).json({
       success: false,
       status: 500,
-      message: 'Failed to get categories',
+      message: 'Failed to get categories'
     });
   }
 };
+
 
 
 // exports.getAllCategories = async (req, res) => {
