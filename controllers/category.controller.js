@@ -429,8 +429,7 @@ exports.getAllSubCategories = async (req, res) => {
 
 exports.getAllThirdLevelCategories = async (req, res) => {
   try {
-    const { page = 1, size = 10, s = '' } = req.query;
-    const { limit, offset } = getPagination(page, size);
+    const { s = '' } = req.query;
 
     // Step 1: Get main categories (level 1)
     const mainCategories = await Category.findAll({
@@ -477,15 +476,13 @@ exports.getAllThirdLevelCategories = async (req, res) => {
       ];
     }
 
-    const data = await Category.findAndCountAll({
+    const data = await Category.findAll({
       where: whereCondition,
-      limit,
-      offset,
       order: [['createdAt', 'DESC']]
     });
 
     // Step 4: Add parent category name (level 2 name)
-    const parentIds = [...new Set(data.rows.map(cat => cat.parent_category_id).filter(Boolean))];
+    const parentIds = [...new Set(data.map(cat => cat.parent_category_id).filter(Boolean))];
     const parents = await Category.findAll({
       where: { id: parentIds },
       attributes: ['id', 'name']
@@ -494,19 +491,17 @@ exports.getAllThirdLevelCategories = async (req, res) => {
     const parentMap = {};
     parents.forEach(p => { parentMap[p.id] = p.name; });
 
-    const categoriesWithParent = data.rows.map(cat => ({
+    const categoriesWithParent = data.map(cat => ({
       ...cat.toJSON(),
       parent_category_name: parentMap[cat.parent_category_id] || null
     }));
 
-    // Step 5: Paginate response
-    const response = getPagingData({ ...data, rows: categoriesWithParent }, page, limit);
-
+    // Step 5: Return all results (no pagination)
     res.status(200).json({
       success: true,
       status: 200,
       message: 'Third-level categories fetched successfully',
-      data: response
+      data: categoriesWithParent
     });
 
   } catch (err) {
@@ -518,6 +513,7 @@ exports.getAllThirdLevelCategories = async (req, res) => {
     });
   }
 };
+
 
 exports.getAllCategoriesUser = async (req, res) => {
   try {
