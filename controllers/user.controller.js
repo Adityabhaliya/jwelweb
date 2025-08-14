@@ -357,6 +357,7 @@ exports.access = async (req, res) => {
       message: 'access_json fetched successfully',
       data: user.access_json,
       role: user.role,
+      is_delete: user.deletedAt,
     });
   } catch (err) {
     console.error(err);
