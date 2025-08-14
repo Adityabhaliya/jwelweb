@@ -483,7 +483,7 @@ exports.createSubadmin = async (req, res) => {
   try {
     const { name, email, password, access_json } = req.body;
 
-    const checkName = await User.findOne({ where: { name, is_sub_admin: true } })
+    const checkName = await User.findOne({ where: { name, is_sub_admin: true ,  deletedAt:null } })
     if (checkName) {
       return res.status(200).json({
         success: false,
@@ -649,6 +649,7 @@ exports.deleteSubadmin = async (req, res) => {
     }
 
     await subadmin.update({ deletedAt: new Date() });
+    await subadmin.update({ access_json: null });
 
     res.status(200).json({
       success: true,
