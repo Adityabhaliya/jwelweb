@@ -19,7 +19,7 @@ module.exports = (sequelize) => {
       allowNull: true,
     },
     category_id: {
-      type: DataTypes.NUMBER,
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     is_block: {

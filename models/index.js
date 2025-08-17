@@ -8,6 +8,7 @@ const Banner = require('./banners.model')(sequelize);
 const contactSchema = require('./contact.schema')(sequelize);
 const customjwel = require('./customjwel.model')(sequelize);
 const faqs = require('./faq.model')(sequelize);
+const Rating = require('./rating.model')(sequelize);
 
 module.exports = {
   sequelize,
@@ -19,6 +20,7 @@ module.exports = {
   Banner,
   contactSchema,
   customjwel,
-  faqs
+  faqs,
+  Rating
 
 };
