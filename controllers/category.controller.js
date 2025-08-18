@@ -165,15 +165,15 @@ exports.getThirdCategoryDropdown = async (req, res) => {
 
     // Step 1: Get Level 1 categories
     let whereCondition = { deletedAt: null, parent_category_id: null };
-    if (type === 'banner') {
+    if (type === "banner") {
       whereCondition.is_block = false;
     }
 
     const level1Categories = await Category.findAll({
       where: whereCondition,
-      attributes: ['id'],
+      attributes: ["id"],
     });
-    const level1Ids = level1Categories.map(cat => cat.id);
+    const level1Ids = level1Categories.map((cat) => cat.id);
 
     if (!level1Ids.length) {
       return res.status(200).json({ success: true, status: 200, data: [] });
@@ -183,38 +183,44 @@ exports.getThirdCategoryDropdown = async (req, res) => {
     const level2Categories = await Category.findAll({
       where: {
         deletedAt: null,
-        parent_category_id: { [Op.in]: level1Ids }
+        parent_category_id: { [Op.in]: level1Ids },
       },
-      attributes: ['id'],
+      attributes: ["id"],
     });
-    const level2Ids = level2Categories.map(cat => cat.id);
+    const level2Ids = level2Categories.map((cat) => cat.id);
 
     if (!level2Ids.length) {
       return res.status(200).json({ success: true, status: 200, data: [] });
     }
 
-    // Step 3: Get Level 3 categories (third level)
+    // Step 3: Get Level 3 categories (third level) with parent details
     const level3Categories = await Category.findAll({
       where: {
         deletedAt: null,
-        parent_category_id: { [Op.in]: level2Ids }
+        parent_category_id: { [Op.in]: level2Ids },
       },
-      attributes: ['id', 'name', 'slug', 'image', 'parent_category_id'],
-      order: [['createdAt', 'ASC']]
+      attributes: ["id", "name", "slug", "image", "parent_category_id"],
+      include: [
+        {
+          model: Category,
+          as: "parentCategory", // 👈 this comes from association
+          attributes: ["id", "name", "slug"],
+        },
+      ],
+      order: [["createdAt", "ASC"]],
     });
 
     return res.status(200).json({
       success: true,
       status: 200,
-      data: level3Categories
+      data: level3Categories,
     });
-
   } catch (err) {
-    console.error('Error fetching third-level categories:', err);
+    console.error("Error fetching third-level categories:", err);
     res.status(500).json({
       success: false,
       status: 500,
-      message: 'Failed to fetch third-level category dropdown'
+      message: "Failed to fetch third-level category dropdown",
     });
   }
 };
