@@ -4,8 +4,8 @@ require('dotenv').config()
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: "blissplatinadesigns@gmail.com",
-        pass: "pweloizetzgvfebr",
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     },
     tls: {
         rejectUnauthorized: false,
@@ -16,7 +16,7 @@ exports.sendOtpEmail = async (email, resetToken, name) => {
     try {
         const resetLink = `${process.env.BASE_URL}reset-password?token=${resetToken}`;
         const mailOptions = {
-            from: "adityabhaliya418@gmail.com",
+            from: process.env.EMAIL_USER,
             to: email,
             subject: "🔐 Reset Your Password",
             html: `
