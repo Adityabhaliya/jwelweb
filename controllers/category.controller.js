@@ -125,13 +125,20 @@ exports.getsecondCategorydropdwon = async (req, res) => {
       });
     }
 
-    // Step 3: Get Level 2 categories (subcategories)
+    // Step 3: Get Level 2 categories with parent category name
     const secondLevelCategories = await Category.findAll({
       where: {
         deletedAt: null,
         parent_category_id: { [Op.in]: parentIds }
       },
       attributes: ['id', 'name', 'slug', 'image', 'parent_category_id'],
+      include: [
+        {
+          model: Category,
+          as: 'parentCategory', // Alias for the join
+          attributes: ['name'] // Only get parent name
+        }
+      ],
       order: [['createdAt', 'ASC']]
     });
 
@@ -150,6 +157,7 @@ exports.getsecondCategorydropdwon = async (req, res) => {
     });
   }
 };
+
 
 exports.getThirdCategoryDropdown = async (req, res) => {
   try {
@@ -674,7 +682,7 @@ exports.getAllCategoriesUserchildwise = async (req, res) => {
 //       parent_category_name: cat.parent_category_id ? parentMap[cat.parent_category_id] || null : null
 //     }));
 
-//     // Step 5: Apply global search (if `s` is passed)
+//     // Step 5: Apply global search (if s is passed)
 //     const filteredResults = s
 //       ? result.filter(category => {
 //           const stringified = JSON.stringify(category).toLowerCase();
@@ -764,4 +772,3 @@ exports.getAllCategoriesUserchildwise = async (req, res) => {
 //     });
 //   }
 // };
-
